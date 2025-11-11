@@ -41,6 +41,7 @@ fun EventListScreen(
             .fillMaxSize()
             .padding(16.dp)
     ) {
+        var expandedIds by remember { mutableStateOf<Set<String>>(emptySet()) }
         // 顶部栏
         Row(
             modifier = Modifier.fillMaxWidth(),
@@ -100,8 +101,19 @@ fun EventListScreen(
                 modifier = Modifier.fillMaxSize(),
                 verticalArrangement = Arrangement.spacedBy(8.dp)
             ) {
-                items(events.reversed()) { event ->
-                    EventCard(event = event)
+                items(events.reversed(), key = { it.id }) { event ->
+                    val isExpanded = expandedIds.contains(event.id)
+                    EventCard(
+                        event = event,
+                        isExpanded = isExpanded,
+                        onToggle = {
+                            expandedIds = if (isExpanded) {
+                                expandedIds - event.id
+                            } else {
+                                expandedIds + event.id
+                            }
+                        }
+                    )
                 }
             }
         }
@@ -112,7 +124,14 @@ fun EventListScreen(
  * 事件卡片组件
  */
 @Composable
-fun EventCard(event: Event) {
+fun EventCard(
+    event: Event,
+    isExpanded: Boolean,
+    onToggle: () -> Unit
+) {
+    val eventName = remember(event) {
+        extractEventName(event.data) ?: event.name
+    }
     Card(
         modifier = Modifier.fillMaxWidth(),
         elevation = CardDefaults.cardElevation(defaultElevation = 2.dp)
@@ -126,35 +145,56 @@ fun EventCard(event: Event) {
                 modifier = Modifier.fillMaxWidth(),
                 horizontalArrangement = Arrangement.SpaceBetween
             ) {
-                Text(
-                    text = event.type,
-                    style = MaterialTheme.typography.titleMedium,
-                    fontWeight = FontWeight.Bold
-                )
-                Text(
-                    text = event.source,
-                    style = MaterialTheme.typography.bodySmall,
-                    color = MaterialTheme.colorScheme.primary
-                )
+                Row(
+                    verticalAlignment = Alignment.CenterVertically,
+                    horizontalArrangement = Arrangement.spacedBy(8.dp),
+                    modifier = Modifier.weight(1f)
+                ) {
+                    Text(
+                        text = eventName,
+                        style = MaterialTheme.typography.titleMedium,
+                        fontWeight = FontWeight.Bold
+                    )
+                    Text(
+                        text = " / ${event.type}, ${event.source}",
+                        style = MaterialTheme.typography.bodySmall,
+                        color = MaterialTheme.colorScheme.primary
+                    )
+                }
+                TextButton(onClick = onToggle) {
+                    Text(if (isExpanded) "收起" else "展开")
+                }
             }
             
-            Spacer(modifier = Modifier.height(8.dp))
-            
-            Text(
-                text = event.data?:"",
-                style = MaterialTheme.typography.bodyMedium,
-                color = MaterialTheme.colorScheme.onSurfaceVariant
-            )
-            
-            Spacer(modifier = Modifier.height(8.dp))
-            
-            Text(
-                text = "ID: ${event.id} | ${formatTimestamp(event.timestamp)}",
-                style = MaterialTheme.typography.bodySmall,
-                color = MaterialTheme.colorScheme.onSurfaceVariant
-            )
+            if (isExpanded) {
+                Spacer(modifier = Modifier.height(8.dp))
+                
+                Text(
+                    text = event.data?:"",
+                    style = MaterialTheme.typography.bodyMedium,
+                    color = MaterialTheme.colorScheme.onSurfaceVariant
+                )
+                
+                Spacer(modifier = Modifier.height(8.dp))
+                
+                Text(
+                    text = "ID: ${event.id} | ${formatTimestamp(event.timestamp)}",
+                    style = MaterialTheme.typography.bodySmall,
+                    color = MaterialTheme.colorScheme.onSurfaceVariant
+                )
+            }
         }
     }
+}
+
+/**
+ * 简单从 JSON 字符串中提取 "name" 字段，不引入额外依赖
+ */
+private fun extractEventName(data: String?): String? {
+    if (data.isNullOrBlank()) return null
+    // 以最小代价提取 "name":"..."; 不严格 JSON 解析，避免引入依赖
+    val regex = Regex(""""name"\s*:\s*"([^"]+)"""")
+    return regex.find(data)?.groupValues?.getOrNull(1)
 }
 
 /**
