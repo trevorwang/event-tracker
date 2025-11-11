@@ -62,6 +62,12 @@ kotlin {
         jvmMain.dependencies {
             implementation(compose.desktop.currentOs)
             implementation(libs.kotlinx.coroutinesSwing)
+            // Ktor server for desktop-embedded server
+            implementation(libs.ktor.serverCore)
+            implementation(libs.ktor.serverNetty)
+            implementation(libs.ktor.serverWebsockets)
+            implementation(libs.ktor.serverContentNegotiation)
+            implementation(libs.ktor.serializationKotlinxJson)
         }
     }
 }
