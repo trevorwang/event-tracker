@@ -112,6 +112,15 @@ class WebSocketClient {
     }
     
     /**
+     * Clear all events
+     */
+    fun clearEvents() {
+        logger.i { "Clearing all events" }
+        _events.value = emptyList()
+        logger.i { "All events cleared" }
+    }
+    
+    /**
      * Close client
      */
     fun close() {

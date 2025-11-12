@@ -122,6 +122,9 @@ class EventListViewModel(
                     filteredEvents = filteredEvents
                 )
             }
+            EventListIntent.ClearAllEvents -> {
+                webSocketClient.clearEvents()
+            }
         }
     }
     

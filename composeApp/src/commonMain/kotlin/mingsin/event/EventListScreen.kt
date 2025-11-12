@@ -65,6 +65,15 @@ fun EventListScreen(
                     )
                 }
                 
+                // Clear all events button
+                if (state.events.isNotEmpty()) {
+                    OutlinedButton(
+                        onClick = { viewModel.dispatch(EventListIntent.ClearAllEvents) }
+                    ) {
+                        Text("Clear All")
+                    }
+                }
+                
                 Button(onClick = { viewModel.dispatch(EventListIntent.Disconnect); onDisconnect() }) {
                     Text("Disconnect")
                 }

@@ -25,6 +25,7 @@ sealed interface EventListIntent : UiIntent {
     data class SetSourceFilter(val source: String?) : EventListIntent
     data class SetDeviceNameFilter(val deviceName: String?) : EventListIntent
     data object ClearFilters : EventListIntent
+    data object ClearAllEvents : EventListIntent
 }
 
 sealed interface EventListEffect : UiEffect {
