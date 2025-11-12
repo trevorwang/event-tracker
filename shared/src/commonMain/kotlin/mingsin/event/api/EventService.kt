@@ -1,7 +1,11 @@
 package mingsin.event.api
 
 import co.touchlab.kermit.Logger
+import kotlinx.coroutines.CoroutineScope
+import kotlinx.coroutines.Dispatchers
+import kotlinx.coroutines.SupervisorJob
 import kotlinx.coroutines.flow.StateFlow
+import kotlinx.coroutines.launch
 import mingsin.event.Event
 import mingsin.event.EventResponse
 import mingsin.event.StatusResponse
@@ -14,6 +18,7 @@ class EventService(
     private val apiClientManager: ApiClientManager
 ) {
     private val logger = Logger.withTag("EventService")
+    private val scope = CoroutineScope(SupervisorJob() + Dispatchers.Default)
     
     /**
      * Get server URL state flow
@@ -71,6 +76,36 @@ class EventService(
         } catch (e: Exception) {
             logger.e(e) { "Failed to get server status: ${e.message}" }
             Result.failure(e)
+        }
+    }
+    
+    /**
+     * Send event to server asynchronously (non-suspend)
+     * Handles coroutine internally
+     * @param event Event to send
+     * @param onResult Callback with Result<EventResponse> (optional)
+     */
+    fun sendEventAsync(
+        event: Event,
+        onResult: ((Result<EventResponse>) -> Unit)? = null
+    ) {
+        scope.launch {
+            val result = sendEvent(event)
+            onResult?.invoke(result)
+        }
+    }
+    
+    /**
+     * Get server status asynchronously (non-suspend)
+     * Handles coroutine internally
+     * @param onResult Callback with Result<StatusResponse> (optional)
+     */
+    fun getServerStatusAsync(
+        onResult: ((Result<StatusResponse>) -> Unit)? = null
+    ) {
+        scope.launch {
+            val result = getServerStatus()
+            onResult?.invoke(result)
         }
     }
 }
