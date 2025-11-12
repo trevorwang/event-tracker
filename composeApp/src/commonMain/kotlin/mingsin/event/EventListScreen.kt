@@ -343,7 +343,10 @@ fun EventCard(
                 val jsonTree = remember(event.data) {
                     parseJsonToTree(event.data)
                 }
-                val expandedNodesState = remember(event.id) { mutableStateOf(setOf("root")) }
+                val expandedNodesState = remember(event.id, jsonTree) {
+                    val allPaths = jsonTree?.let { collectAllPaths(it) } ?: setOf("root")
+                    mutableStateOf(allPaths)
+                }
 
                 if (jsonTree != null) {
                     JsonTreeView(
@@ -444,6 +447,16 @@ private fun parseJsonToTree(data: String?): JsonTreeNode? {
 }
 
 /**
+ * Get node type order for sorting (0 = object/primitive, 1 = array)
+ */
+private fun getNodeTypeOrder(node: JsonTreeNode): Int {
+    return when (node) {
+        is JsonTreeNode.ArrayNode -> 1
+        else -> 0
+    }
+}
+
+/**
  * Build tree node from JSON element
  */
 private fun buildTreeNode(key: String?, element: JsonElement): JsonTreeNode {
@@ -451,7 +464,10 @@ private fun buildTreeNode(key: String?, element: JsonElement): JsonTreeNode {
         is JsonObject -> {
             val children = element.entries.map { entry ->
                 buildTreeNode(entry.key, entry.value)
-            }
+            }.sortedWith(compareBy(
+                { getNodeTypeOrder(it) }, // Arrays go last
+                { it.key ?: "" } // Then alphabetically by key
+            ))
             JsonTreeNode.ObjectNode(key, element, children)
         }
         is JsonArray -> {
@@ -464,6 +480,31 @@ private fun buildTreeNode(key: String?, element: JsonElement): JsonTreeNode {
             JsonTreeNode.PrimitiveNode(key, element)
         }
     }
+}
+
+/**
+ * Collect all node paths recursively for default expansion
+ */
+private fun collectAllPaths(node: JsonTreeNode, path: String = "root", paths: MutableSet<String> = mutableSetOf()): Set<String> {
+    paths.add(path)
+    when (node) {
+        is JsonTreeNode.ObjectNode -> {
+            node.children.forEachIndexed { index, child ->
+                val childPath = if (path == "root") child.key ?: "" else "$path.${child.key}"
+                collectAllPaths(child, childPath, paths)
+            }
+        }
+        is JsonTreeNode.ArrayNode -> {
+            node.children.forEachIndexed { index, child ->
+                val childPath = "$path[$index]"
+                collectAllPaths(child, childPath, paths)
+            }
+        }
+        is JsonTreeNode.PrimitiveNode -> {
+            // Leaf node, no children
+        }
+    }
+    return paths
 }
 
 /**
