@@ -5,6 +5,7 @@ plugins {
     alias(libs.plugins.kotlinMultiplatform)
     alias(libs.plugins.androidLibrary)
     alias(libs.plugins.kotlinSerialization)
+    alias(libs.plugins.ksp)
 }
 
 kotlin {
@@ -36,6 +37,7 @@ kotlin {
             implementation(libs.ktor.clientWebsockets)
             implementation(libs.ktor.clientContentNegotiation)
             implementation(libs.ktor.serializationKotlinxJsonClient)
+            implementation(libs.ktorfit)
             implementation(libs.kermit)
         }
         androidMain.dependencies {
@@ -58,6 +60,10 @@ kotlin {
         }
     }
 }
+
+//dependencies {
+//    add("kspCommonMainMetadata", libs.ktorfit.ksp)
+//}
 
 android {
     namespace = "mingsin.event.shared"
