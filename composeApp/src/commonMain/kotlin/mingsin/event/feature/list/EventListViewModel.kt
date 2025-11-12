@@ -37,12 +37,14 @@ class EventListViewModel(
     private fun updateStateWithEvents(events: List<Event>) {
         val availableTypes = events.map { it.type }.distinct().toSet()
         val availableSources = events.map { it.source }.distinct().toSet()
+        val availableDeviceNames = events.mapNotNull { it.deviceName }.distinct().toSet()
         val filteredEvents = applyFilters(events)
         
         _uiState.value = _uiState.value.copy(
             events = events,
             availableTypes = availableTypes,
             availableSources = availableSources,
+            availableDeviceNames = availableDeviceNames,
             filteredEvents = filteredEvents
         )
     }
@@ -51,7 +53,8 @@ class EventListViewModel(
         return events.filter { event ->
             val typeMatch = _uiState.value.selectedType == null || event.type == _uiState.value.selectedType
             val sourceMatch = _uiState.value.selectedSource == null || event.source == _uiState.value.selectedSource
-            typeMatch && sourceMatch
+            val deviceNameMatch = _uiState.value.selectedDeviceName == null || event.deviceName == _uiState.value.selectedDeviceName
+            typeMatch && sourceMatch && deviceNameMatch
         }
     }
 
@@ -72,11 +75,12 @@ class EventListViewModel(
             }
             is EventListIntent.SetTypeFilter -> {
                 val current = _uiState.value
-                val filteredEvents = if (intent.type == null) {
-                    applyFilters(current.events, null, current.selectedSource)
-                } else {
-                    applyFilters(current.events, intent.type, current.selectedSource)
-                }
+                val filteredEvents = applyFilters(
+                    current.events,
+                    intent.type,
+                    current.selectedSource,
+                    current.selectedDeviceName
+                )
                 _uiState.value = current.copy(
                     selectedType = intent.type,
                     filteredEvents = filteredEvents
@@ -84,33 +88,54 @@ class EventListViewModel(
             }
             is EventListIntent.SetSourceFilter -> {
                 val current = _uiState.value
-                val filteredEvents = if (intent.source == null) {
-                    applyFilters(current.events, current.selectedType, null)
-                } else {
-                    applyFilters(current.events, current.selectedType, intent.source)
-                }
+                val filteredEvents = applyFilters(
+                    current.events,
+                    current.selectedType,
+                    intent.source,
+                    current.selectedDeviceName
+                )
                 _uiState.value = current.copy(
                     selectedSource = intent.source,
                     filteredEvents = filteredEvents
                 )
             }
+            is EventListIntent.SetDeviceNameFilter -> {
+                val current = _uiState.value
+                val filteredEvents = applyFilters(
+                    current.events,
+                    current.selectedType,
+                    current.selectedSource,
+                    intent.deviceName
+                )
+                _uiState.value = current.copy(
+                    selectedDeviceName = intent.deviceName,
+                    filteredEvents = filteredEvents
+                )
+            }
             EventListIntent.ClearFilters -> {
                 val current = _uiState.value
-                val filteredEvents = applyFilters(current.events, null, null)
+                val filteredEvents = applyFilters(current.events, null, null, null)
                 _uiState.value = current.copy(
                     selectedType = null,
                     selectedSource = null,
+                    selectedDeviceName = null,
                     filteredEvents = filteredEvents
                 )
             }
         }
     }
     
-    private fun applyFilters(events: List<Event>, type: String?, source: String?): List<Event> {
+    private fun applyFilters(
+        events: List<Event>,
+        type: String?,
+        source: String?,
+        deviceName: String?
+    ): List<Event> {
         return events.filter { event ->
             val typeMatch = type == null || event.type == type
             val sourceMatch = source == null || event.source == source
-            typeMatch && sourceMatch
+            val deviceNameMatch = deviceName == null || event.deviceName == deviceName
+            typeMatch && sourceMatch && deviceNameMatch
         }
     }
 }

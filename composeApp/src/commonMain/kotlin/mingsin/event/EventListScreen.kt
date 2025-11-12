@@ -77,13 +77,18 @@ fun EventListScreen(
         EventFilters(
             selectedType = state.selectedType,
             selectedSource = state.selectedSource,
+            selectedDeviceName = state.selectedDeviceName,
             availableTypes = state.availableTypes,
             availableSources = state.availableSources,
+            availableDeviceNames = state.availableDeviceNames,
             onTypeSelected = { type ->
                 viewModel.dispatch(EventListIntent.SetTypeFilter(type))
             },
             onSourceSelected = { source ->
                 viewModel.dispatch(EventListIntent.SetSourceFilter(source))
+            },
+            onDeviceNameSelected = { deviceName ->
+                viewModel.dispatch(EventListIntent.SetDeviceNameFilter(deviceName))
             },
             onClearFilters = {
                 viewModel.dispatch(EventListIntent.ClearFilters)
@@ -131,10 +136,13 @@ fun EventListScreen(
 fun EventFilters(
     selectedType: String?,
     selectedSource: String?,
+    selectedDeviceName: String?,
     availableTypes: Set<String>,
     availableSources: Set<String>,
+    availableDeviceNames: Set<String>,
     onTypeSelected: (String?) -> Unit,
     onSourceSelected: (String?) -> Unit,
+    onDeviceNameSelected: (String?) -> Unit,
     onClearFilters: () -> Unit
 ) {
     Card(
@@ -160,7 +168,7 @@ fun EventFilters(
                     style = MaterialTheme.typography.titleSmall,
                     fontWeight = FontWeight.Bold
                 )
-                if (selectedType != null || selectedSource != null) {
+                if (selectedType != null || selectedSource != null || selectedDeviceName != null) {
                     TextButton(onClick = onClearFilters) {
                         Text("Clear")
                     }
@@ -186,6 +194,15 @@ fun EventFilters(
                     selectedValue = selectedSource,
                     options = availableSources.sorted(),
                     onValueSelected = onSourceSelected,
+                    modifier = Modifier.weight(1f)
+                )
+                
+                // Device Name filter
+                FilterDropdown(
+                    label = "Device Name",
+                    selectedValue = selectedDeviceName,
+                    options = availableDeviceNames.sorted(),
+                    onValueSelected = onDeviceNameSelected,
                     modifier = Modifier.weight(1f)
                 )
             }

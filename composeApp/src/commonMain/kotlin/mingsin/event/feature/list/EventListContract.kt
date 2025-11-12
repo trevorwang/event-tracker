@@ -11,8 +11,10 @@ data class EventListState(
     val expandedIds: Set<String> = emptySet(),
     val selectedType: String? = null,
     val selectedSource: String? = null,
+    val selectedDeviceName: String? = null,
     val availableTypes: Set<String> = emptySet(),
     val availableSources: Set<String> = emptySet(),
+    val availableDeviceNames: Set<String> = emptySet(),
     val filteredEvents: List<Event> = emptyList()
 ) : UiState
 
@@ -21,6 +23,7 @@ sealed interface EventListIntent : UiIntent {
     data object Disconnect : EventListIntent
     data class SetTypeFilter(val type: String?) : EventListIntent
     data class SetSourceFilter(val source: String?) : EventListIntent
+    data class SetDeviceNameFilter(val deviceName: String?) : EventListIntent
     data object ClearFilters : EventListIntent
 }
 
