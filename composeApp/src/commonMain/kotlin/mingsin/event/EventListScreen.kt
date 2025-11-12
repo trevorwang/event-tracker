@@ -10,16 +10,22 @@ import androidx.compose.ui.Alignment
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
 import org.jetbrains.compose.ui.tooling.preview.Preview
+import androidx.compose.foundation.clickable
+import androidx.compose.foundation.layout.Row
 import androidx.compose.runtime.collectAsState
 import androidx.compose.runtime.getValue
-import com.mikepenz.markdown.compose.Markdown
-import com.mikepenz.markdown.compose.components.markdownComponents
-import com.mikepenz.markdown.compose.elements.highlightedCodeBlock
-import com.mikepenz.markdown.compose.elements.highlightedCodeFence
-import com.mikepenz.markdown.m3.Markdown
-import com.mikepenz.markdown.m3.markdownColor
-import com.mikepenz.markdown.model.MarkdownColors
+import androidx.compose.runtime.mutableStateOf
+import androidx.compose.runtime.remember
+import androidx.compose.runtime.setValue
+import androidx.compose.ui.text.font.FontFamily
 import kotlinx.serialization.json.Json
+import kotlinx.serialization.json.JsonElement
+import kotlinx.serialization.json.JsonObject
+import kotlinx.serialization.json.JsonArray
+import kotlinx.serialization.json.JsonPrimitive
+import kotlinx.serialization.json.booleanOrNull
+import kotlinx.serialization.json.doubleOrNull
+import kotlinx.serialization.json.longOrNull
 import mingsin.event.feature.list.EventListIntent
 import mingsin.event.feature.list.EventListViewModel
 import mingsin.event.feature.list.EventListState
@@ -334,28 +340,26 @@ fun EventCard(
             if (isExpanded) {
                 Spacer(modifier = Modifier.height(8.dp))
 
-//                val markdownContent = remember(event.data) {
-//                    formatEventDataAsMarkdown(event.data)
-//                }
+                val jsonTree = remember(event.data) {
+                    parseJsonToTree(event.data)
+                }
+                val expandedNodesState = remember(event.id) { mutableStateOf(setOf("root")) }
 
-//                if (markdownContent.isNotEmpty()) {
-//                    Markdown(
-//                        content = markdownContent,
-//                        colors = markdownColor(),
-//                        modifier = Modifier.fillMaxWidth(),
-//                        components = markdownComponents(
-//                            codeBlock = highlightedCodeBlock,
-//                            codeFence = highlightedCodeFence,
-//                        )
-//                    )
-//                } else {
-                Text(
-                    text = formatJson(event.data?:""),
-                    style = MaterialTheme.typography.bodyMedium,
-                    color = MaterialTheme.colorScheme.onSurfaceVariant,
-                    modifier = Modifier.fillMaxWidth()
-                )
-//                }
+                if (jsonTree != null) {
+                    JsonTreeView(
+                        node = jsonTree,
+                        expandedNodes = expandedNodesState.value,
+                        onExpandedNodesChange = { expandedNodesState.value = it },
+                        modifier = Modifier.fillMaxWidth()
+                    )
+                } else {
+                    Text(
+                        text = event.data ?: "",
+                        style = MaterialTheme.typography.bodyMedium,
+                        color = MaterialTheme.colorScheme.onSurfaceVariant,
+                        modifier = Modifier.fillMaxWidth()
+                    )
+                }
 
                 Spacer(modifier = Modifier.height(8.dp))
 
@@ -397,19 +401,302 @@ fun formatJson(data: String): String {
 }
 
 /**
- * Format event data as Markdown code block if it's valid JSON
- * Returns markdown string with JSON syntax highlighting
+ * JSON Tree Node data structure
  */
-private fun formatEventDataAsMarkdown(data: String?): String {
-    if (data.isNullOrBlank()) return ""
+sealed class JsonTreeNode {
+    abstract val key: String?
+    abstract val value: JsonElement
+    
+    data class ObjectNode(
+        override val key: String?,
+        override val value: JsonObject,
+        val children: List<JsonTreeNode>
+    ) : JsonTreeNode()
+    
+    data class ArrayNode(
+        override val key: String?,
+        override val value: JsonArray,
+        val children: List<JsonTreeNode>
+    ) : JsonTreeNode()
+    
+    data class PrimitiveNode(
+        override val key: String?,
+        override val value: JsonPrimitive
+    ) : JsonTreeNode()
+}
 
+/**
+ * Parse JSON string to tree structure
+ */
+private fun parseJsonToTree(data: String?): JsonTreeNode? {
+    if (data.isNullOrBlank()) return null
+    
     return try {
-        val formattedJson = formatJson(data)
-        // Wrap in markdown code block with json syntax
-        "```json\n$formattedJson\n```"
+        val json = Json {
+            ignoreUnknownKeys = true
+            isLenient = true
+        }
+        val jsonElement = json.parseToJsonElement(data)
+        buildTreeNode(null, jsonElement)
     } catch (e: Exception) {
-        // If not valid JSON, return empty string to use plain text display
-        ""
+        null
+    }
+}
+
+/**
+ * Build tree node from JSON element
+ */
+private fun buildTreeNode(key: String?, element: JsonElement): JsonTreeNode {
+    return when (element) {
+        is JsonObject -> {
+            val children = element.entries.map { entry ->
+                buildTreeNode(entry.key, entry.value)
+            }
+            JsonTreeNode.ObjectNode(key, element, children)
+        }
+        is JsonArray -> {
+            val children = element.mapIndexed { index, item ->
+                buildTreeNode(index.toString(), item)
+            }
+            JsonTreeNode.ArrayNode(key, element, children)
+        }
+        is JsonPrimitive -> {
+            JsonTreeNode.PrimitiveNode(key, element)
+        }
+    }
+}
+
+/**
+ * Format JSON primitive value
+ */
+private fun formatJsonPrimitive(primitive: JsonPrimitive): String {
+    val content = primitive.content
+    return when {
+        primitive.isString -> "\"$content\""
+        primitive.booleanOrNull != null -> content
+        primitive.longOrNull != null -> content
+        primitive.doubleOrNull != null -> content
+        content == "null" -> "null"
+        else -> content
+    }
+}
+
+/**
+ * JSON Tree View Component
+ */
+@Composable
+fun JsonTreeView(
+    node: JsonTreeNode,
+    modifier: Modifier = Modifier,
+    expandedNodes: Set<String>,
+    onExpandedNodesChange: (Set<String>) -> Unit,
+    path: String = "root",
+    prefix: String = "",
+    isLast: Boolean = true
+) {
+    Column(modifier = modifier) {
+        when (node) {
+            is JsonTreeNode.ObjectNode -> {
+                if (path == "root") {
+                    // Root node
+                    JsonTreeNodeRow(
+                        label = "root",
+                        isExpanded = expandedNodes.contains(path),
+                        hasChildren = node.children.isNotEmpty(),
+                        onToggle = {
+                            val newSet = expandedNodes.toMutableSet()
+                            if (newSet.contains(path)) {
+                                newSet.remove(path)
+                            } else {
+                                newSet.add(path)
+                            }
+                            onExpandedNodesChange(newSet)
+                        },
+                        modifier = Modifier.fillMaxWidth()
+                    )
+                    
+                    if (expandedNodes.contains(path)) {
+                        node.children.forEachIndexed { index, child ->
+                            val isLastChild = index == node.children.size - 1
+                            val childPath = child.key ?: ""
+                            JsonTreeView(
+                                node = child,
+                                expandedNodes = expandedNodes,
+                                onExpandedNodesChange = onExpandedNodesChange,
+                                path = childPath,
+                                prefix = "",
+                                isLast = isLastChild,
+                                modifier = Modifier.fillMaxWidth()
+                            )
+                        }
+                    }
+                } else {
+                    // Nested object
+                    val connector = if (isLast) "└── " else "├── "
+                    val label = "\"${node.key}\": { Object } (${node.value.size} keys)"
+                    
+                    Row(
+                        modifier = Modifier.fillMaxWidth(),
+                        verticalAlignment = Alignment.CenterVertically
+                    ) {
+                        Text(
+                            text = prefix,
+                            style = MaterialTheme.typography.bodySmall,
+                            fontFamily = FontFamily.Monospace,
+                            color = MaterialTheme.colorScheme.onSurfaceVariant
+                        )
+                        JsonTreeNodeRow(
+                            label = "$connector$label",
+                            isExpanded = expandedNodes.contains(path),
+                            hasChildren = node.children.isNotEmpty(),
+                            onToggle = {
+                                val newSet = expandedNodes.toMutableSet()
+                                if (newSet.contains(path)) {
+                                    newSet.remove(path)
+                                } else {
+                                    newSet.add(path)
+                                }
+                                onExpandedNodesChange(newSet)
+                            },
+                            modifier = Modifier.weight(1f)
+                        )
+                    }
+                    
+                    if (expandedNodes.contains(path)) {
+                        val nextPrefix = if (isLast) "$prefix    " else "$prefix│   "
+                        node.children.forEachIndexed { index, child ->
+                            val isLastChild = index == node.children.size - 1
+                            val childPath = "$path.${child.key}"
+                            JsonTreeView(
+                                node = child,
+                                expandedNodes = expandedNodes,
+                                onExpandedNodesChange = onExpandedNodesChange,
+                                path = childPath,
+                                prefix = nextPrefix,
+                                isLast = isLastChild,
+                                modifier = Modifier.fillMaxWidth()
+                            )
+                        }
+                    }
+                }
+            }
+            is JsonTreeNode.ArrayNode -> {
+                val connector = if (isLast) "└── " else "├── "
+                val label = "\"${node.key}\": [ Array ] (${node.value.size} items)"
+                
+                Row(
+                    modifier = Modifier.fillMaxWidth(),
+                    verticalAlignment = Alignment.CenterVertically
+                ) {
+                    Text(
+                        text = prefix,
+                        style = MaterialTheme.typography.bodySmall,
+                        fontFamily = FontFamily.Monospace,
+                        color = MaterialTheme.colorScheme.onSurfaceVariant
+                    )
+                    JsonTreeNodeRow(
+                        label = "$connector$label",
+                        isExpanded = expandedNodes.contains(path),
+                        hasChildren = node.children.isNotEmpty(),
+                        onToggle = {
+                            val newSet = expandedNodes.toMutableSet()
+                            if (newSet.contains(path)) {
+                                newSet.remove(path)
+                            } else {
+                                newSet.add(path)
+                            }
+                            onExpandedNodesChange(newSet)
+                        },
+                        modifier = Modifier.weight(1f)
+                    )
+                }
+                
+                if (expandedNodes.contains(path)) {
+                    val nextPrefix = if (isLast) "$prefix    " else "$prefix│   "
+                    node.children.forEachIndexed { index, child ->
+                        val isLastChild = index == node.children.size - 1
+                        val childPath = "$path[$index]"
+                        JsonTreeView(
+                            node = child,
+                            expandedNodes = expandedNodes,
+                            onExpandedNodesChange = onExpandedNodesChange,
+                            path = childPath,
+                            prefix = nextPrefix,
+                            isLast = isLastChild,
+                            modifier = Modifier.fillMaxWidth()
+                        )
+                    }
+                }
+            }
+            is JsonTreeNode.PrimitiveNode -> {
+                val connector = if (isLast) "└── " else "├── "
+                val label = if (node.key != null && node.key?.matches(Regex("\\d+")) == true) {
+                    // Array index
+                    "[${node.key}]: ${formatJsonPrimitive(node.value)}"
+                } else if (node.key != null) {
+                    "\"${node.key}\": ${formatJsonPrimitive(node.value)}"
+                } else {
+                    formatJsonPrimitive(node.value)
+                }
+                
+                Row(
+                    modifier = Modifier.fillMaxWidth(),
+                    verticalAlignment = Alignment.CenterVertically
+                ) {
+                    Text(
+                        text = prefix,
+                        style = MaterialTheme.typography.bodySmall,
+                        fontFamily = FontFamily.Monospace,
+                        color = MaterialTheme.colorScheme.onSurfaceVariant
+                    )
+                    Text(
+                        text = "$connector$label",
+                        style = MaterialTheme.typography.bodySmall,
+                        fontFamily = FontFamily.Monospace,
+                        color = MaterialTheme.colorScheme.onSurfaceVariant,
+                        modifier = Modifier.weight(1f)
+                    )
+                }
+            }
+        }
+    }
+}
+
+/**
+ * JSON Tree Node Row Component
+ */
+@Composable
+private fun JsonTreeNodeRow(
+    label: String,
+    isExpanded: Boolean,
+    hasChildren: Boolean,
+    onToggle: () -> Unit,
+    modifier: Modifier = Modifier
+) {
+    Row(
+        modifier = modifier
+            .clickable(enabled = hasChildren) { onToggle() },
+        verticalAlignment = Alignment.CenterVertically,
+        horizontalArrangement = Arrangement.Start
+    ) {
+        if (hasChildren) {
+            Text(
+                text = if (isExpanded) "▼" else "▶",
+                style = MaterialTheme.typography.bodySmall,
+                fontFamily = FontFamily.Monospace,
+                color = MaterialTheme.colorScheme.onSurfaceVariant,
+                modifier = Modifier.padding(end = 4.dp)
+            )
+        } else {
+            Spacer(modifier = Modifier.width(12.dp))
+        }
+        
+        Text(
+            text = label,
+            style = MaterialTheme.typography.bodySmall,
+            fontFamily = FontFamily.Monospace,
+            color = MaterialTheme.colorScheme.onSurfaceVariant
+        )
     }
 }
 
