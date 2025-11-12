@@ -36,6 +36,7 @@ kotlin {
             implementation(libs.ktor.clientWebsockets)
             implementation(libs.ktor.clientContentNegotiation)
             implementation(libs.ktor.serializationKotlinxJsonClient)
+            implementation(libs.kermit)
         }
         androidMain.dependencies {
             implementation(libs.ktor.clientAndroid)

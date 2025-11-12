@@ -17,6 +17,7 @@ kotlinx-coroutines = "1.10.2"
 kotlinx-serialization = "1.7.3"
 ktor = "3.3.1"
 logback = "1.5.20"
+kermit = "2.0.4"
 
 [libraries]
 kotlin-test = { module = "org.jetbrains.kotlin:kotlin-test", version.ref = "kotlin" }
@@ -48,6 +49,7 @@ ktor-clientDarwin = { module = "io.ktor:ktor-client-darwin", version.ref = "ktor
 ktor-clientCio = { module = "io.ktor:ktor-client-cio", version.ref = "ktor" }
 ktor-clientJs = { module = "io.ktor:ktor-client-js", version.ref = "ktor" }
 ktor-clientWasm = { module = "io.ktor:ktor-client-wasm", version.ref = "ktor" }
+kermit = { module = "co.touchlab:kermit", version.ref = "kermit" }
 
 [plugins]
 androidApplication = { id = "com.android.application", version.ref = "agp" }

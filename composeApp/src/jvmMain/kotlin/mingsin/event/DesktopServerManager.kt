@@ -1,5 +1,6 @@
 package mingsin.event
 
+import co.touchlab.kermit.Logger
 import io.ktor.serialization.kotlinx.json.json
 import io.ktor.server.application.Application
 import io.ktor.server.application.install
@@ -32,6 +33,7 @@ import java.net.NetworkInterface
 import kotlin.time.Duration.Companion.seconds
 
 object DesktopServerManager {
+    private val logger = Logger.withTag("DesktopServerManager")
     private val scope = CoroutineScope(SupervisorJob() + Dispatchers.IO)
 
     private var server: EmbeddedServer<NettyApplicationEngine, NettyApplicationEngine.Configuration>? = null
@@ -49,12 +51,16 @@ object DesktopServerManager {
     fun start() {
         if (_isStarting.value || _isRunning.value) return
         _isStarting.value = true
+        logger.i { "Starting embedded server..." }
         scope.launch {
             try {
                 val engine = startEmbeddedServer()
                 server = engine
                 _isRunning.value = true
                 _endpoints.value = getLocalHttpAddresses()
+                logger.i { "Server started successfully. Endpoints: ${_endpoints.value.joinToString()}" }
+            } catch (e: Exception) {
+                logger.e(e) { "Failed to start server: ${e.message}" }
             } finally {
                 _isStarting.value = false
             }
@@ -63,12 +69,15 @@ object DesktopServerManager {
 
     fun stop() {
         val toStop = server ?: return
+        logger.i { "Stopping embedded server..." }
         server = null
         _isRunning.value = false
         scope.launch {
             try {
                 toStop.stop()
-            } catch (_: Throwable) {
+                logger.i { "Server stopped successfully" }
+            } catch (e: Throwable) {
+                logger.e(e) { "Error stopping server: ${e.message}" }
             }
             _endpoints.value = emptyList()
         }
@@ -111,7 +120,9 @@ object DesktopServerManager {
                 post("/api/events") {
                     try {
                         val event = call.receive<Event>()
+                        logger.d { "Event received via REST: id=${event.id}, type=${event.type}, source=${event.source}" }
                         sessionManager.broadcastToDesktop(event)
+                        logger.i { "Event broadcasted to desktop clients: id=${event.id}" }
                         call.respond(
                             io.ktor.http.HttpStatusCode.Created,
                             EventResponse(
@@ -121,6 +132,7 @@ object DesktopServerManager {
                             )
                         )
                     } catch (e: Exception) {
+                        logger.e(e) { "Failed to process event via REST: ${e.message}" }
                         call.respond(
                             io.ktor.http.HttpStatusCode.BadRequest,
                             EventResponse(
@@ -144,29 +156,36 @@ object DesktopServerManager {
                 }
                 // WebSocket: App sends events
                 webSocket("/ws/app") {
+                    logger.i { "App client connected" }
                     sessionManager.addAppSession(this)
                     try {
                         for (frame in incoming) {
                             if (frame is io.ktor.websocket.Frame.Text) {
                                 val text = frame.readText()
+                                logger.d { "Received event from app: $text" }
                                 try {
                                     val event = kotlinx.serialization.json.Json {
                                         ignoreUnknownKeys = true
                                         encodeDefaults = true
                                     }.decodeFromString<Event>(text)
+                                    logger.i { "Event received from app: id=${event.id}, type=${event.type}, source=${event.source}" }
                                     sessionManager.broadcastToDesktop(event)
-                                } catch (_: Exception) {
+                                } catch (e: Exception) {
+                                    logger.e(e) { "Failed to parse event from app: ${e.message}" }
                                     send(io.ktor.websocket.Frame.Text("Error: Invalid event format"))
                                 }
                             }
                         }
-                    } catch (_: Exception) {
+                    } catch (e: Exception) {
+                        logger.e(e) { "WebSocket error for app client: ${e.message}" }
                     } finally {
                         sessionManager.removeAppSession(this)
+                        logger.i { "App client disconnected" }
                     }
                 }
                 // WebSocket: Desktop receives events
                webSocket("/ws/desktop") {
+                    logger.i { "Desktop client connected" }
                     sessionManager.addDesktopSession(this)
                    try {
                        // Send welcome message
@@ -178,14 +197,14 @@ object DesktopServerManager {
                            // But here we can handle heartbeat or other control messages
                            if (frame is Frame.Text) {
                                val text = frame.readText()
-//                               logger.debug("Received message from desktop: $text")
+                               logger.d { "Received message from desktop: $text" }
                            }
                        }
                    } catch (e: Exception) {
-//                       logger.error("WebSocket error for desktop client: ${e.message}", e)
+                       logger.e(e) { "WebSocket error for desktop client: ${e.message}" }
                    } finally {
                        sessionManager.removeDesktopSession(this)
-//                       logger.info("Desktop client disconnected")
+                       logger.i { "Desktop client disconnected" }
                    }
                 }
             }

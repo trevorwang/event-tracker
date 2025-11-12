@@ -1,5 +1,6 @@
 package mingsin.event
 
+import co.touchlab.kermit.Logger
 import io.ktor.client.*
 import io.ktor.client.plugins.websocket.*
 import io.ktor.websocket.*
@@ -19,6 +20,7 @@ import kotlinx.serialization.json.Json
  * WebSocket client manager
  */
 class WebSocketClient {
+    private val logger = Logger.withTag("WebSocketClient")
     private val client = createHttpClient()
     private val json = Json {
         ignoreUnknownKeys = true
@@ -40,9 +42,11 @@ class WebSocketClient {
      */
     suspend fun connect(url: String): Result<Unit> {
         return try {
+            logger.i { "Connecting to WebSocket server: $url" }
             val newSession = client.webSocketSession(url)
             session = newSession
             _isConnected.value = true
+            logger.i { "Connected to WebSocket server: $url" }
 
             // Listen for messages in background
             scope.launch {
@@ -50,24 +54,28 @@ class WebSocketClient {
                     for (frame in newSession.incoming) {
                         if (frame is Frame.Text) {
                             val text = frame.readText()
+                            logger.d { "Received message: $text" }
                             try {
                                 val event = json.decodeFromString<Event>(text)
                                 _events.value = _events.value + event
-                            } catch (_: Exception) {
-                                // Ignore unparseable messages
+                                logger.d { "Event parsed and added: id=${event.id}, type=${event.type}" }
+                            } catch (e: Exception) {
+                                logger.w(e) { "Failed to parse message as Event: ${e.message}" }
                             }
                         }
                     }
-                } catch (_: Exception) {
-                    // Connection exception/closed
+                } catch (e: Exception) {
+                    logger.e(e) { "Connection exception/closed: ${e.message}" }
                 } finally {
                     _isConnected.value = false
                     session = null
+                    logger.i { "Disconnected from WebSocket server" }
                 }
             }
 
             Result.success(Unit)
         } catch (e: Exception) {
+            logger.e(e) { "Failed to connect to WebSocket server: ${e.message}" }
             _isConnected.value = false
             session = null
             Result.failure(e)
@@ -78,9 +86,11 @@ class WebSocketClient {
      * Disconnect from server
      */
     suspend fun disconnect() {
+        logger.i { "Disconnecting from WebSocket server" }
         session?.close()
         session = null
         _isConnected.value = false
+        logger.i { "Disconnected from WebSocket server" }
     }
     
     /**
@@ -105,10 +115,12 @@ class WebSocketClient {
      * Close client
      */
     fun close() {
+        logger.i { "Closing WebSocket client" }
         scope.launch {
             disconnect()
         }
         client.close()
+        logger.i { "WebSocket client closed" }
     }
 }
 
