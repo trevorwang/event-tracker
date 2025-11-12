@@ -10,14 +10,14 @@ androidx-espresso = "3.7.0"
 androidx-lifecycle = "2.9.5"
 androidx-testExt = "1.3.0"
 composeHotReload = "1.0.0-rc02"
-composeMultiplatform = "1.9.1"
+composeMultiplatform = "1.8.2"
 junit = "4.13.2"
-kotlin = "2.2.20"
-ksp = "2.2.20-2.0.3"
-kotlinx-coroutines = "1.10.2"
+kotlin = "2.0.20"
+ksp = "2.0.20-1.0.25"
+kotlinx-coroutines = "1.7.3"
 kotlinx-serialization = "1.7.3"
-ktor = "3.3.1"
-ktorfit = "2.5.2"
+ktor = "3.0.3"
+ktorfit = "2.1.0"
 logback = "1.5.20"
 kermit = "2.0.4"
 
@@ -52,7 +52,6 @@ ktor-clientCio = { module = "io.ktor:ktor-client-cio", version.ref = "ktor" }
 ktor-clientJs = { module = "io.ktor:ktor-client-js", version.ref = "ktor" }
 ktor-clientWasm = { module = "io.ktor:ktor-client-wasm", version.ref = "ktor" }
 ktorfit = { module = "de.jensklingenberg.ktorfit:ktorfit-lib", version.ref = "ktorfit" }
-ktorfit-ksp = { module = "de.jensklingenberg.ktorfit:ktorfit-ksp", version.ref = "ktorfit" }
 kermit = { module = "co.touchlab:kermit", version.ref = "kermit" }
 
 [plugins]
@@ -66,3 +65,4 @@ kotlinSerialization = { id = "org.jetbrains.kotlin.plugin.serialization", versio
 ksp = { id = "com.google.devtools.ksp", version.ref = "ksp" }
 ktor = { id = "io.ktor.plugin", version.ref = "ktor" }
 kotlinMultiplatform = { id = "org.jetbrains.kotlin.multiplatform", version.ref = "kotlin" }
+ktorfit = { id = "de.jensklingenberg.ktorfit", version.ref = "ktorfit" }

@@ -1,4 +1,3 @@
-import org.jetbrains.kotlin.gradle.ExperimentalWasmDsl
 import org.jetbrains.kotlin.gradle.dsl.JvmTarget
 
 plugins {
@@ -6,8 +5,11 @@ plugins {
     alias(libs.plugins.androidLibrary)
     alias(libs.plugins.kotlinSerialization)
     alias(libs.plugins.ksp)
+    alias(libs.plugins.ktorfit)
 }
-
+ksp {
+    arg("ksp.incremental", "false")
+}
 kotlin {
     androidTarget {
         compilerOptions {
@@ -20,14 +22,14 @@ kotlin {
     
     jvm()
     
-    js {
-        browser()
-    }
+//    js {
+//        browser()
+//    }
     
-    @OptIn(ExperimentalWasmDsl::class)
-    wasmJs {
-        browser()
-    }
+//    @OptIn(ExperimentalWasmDsl::class)
+//    wasmJs {
+//        browser()
+//    }
     
     sourceSets {
         commonMain.dependencies {
@@ -49,12 +51,12 @@ kotlin {
         jvmMain.dependencies {
             implementation(libs.ktor.clientCio)
         }
-        jsMain.dependencies {
-            implementation(libs.ktor.clientJs)
-        }
-        wasmJsMain.dependencies {
-            implementation(libs.ktor.clientWasm)
-        }
+//        jsMain.dependencies {
+//            implementation(libs.ktor.clientJs)
+//        }
+//        wasmJsMain.dependencies {
+//            implementation(libs.ktor.clientWasm)
+//        }
         commonTest.dependencies {
             implementation(libs.kotlin.test)
         }
@@ -74,5 +76,12 @@ android {
     }
     defaultConfig {
         minSdk = libs.versions.android.minSdk.get().toInt()
+    }
+
+    // AAR output setup
+    publishing {
+        singleVariant("release") {
+            withSourcesJar()
+        }
     }
 }

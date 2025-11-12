@@ -16,10 +16,10 @@ import mingsin.event.SERVER_PORT
  * Supports dynamic server URL configuration
  */
 class ApiClientManager {
-    private var ktorfit: Ktorfit? = null
+    private lateinit var ktorfit: Ktorfit
     private var eventApi: EventApi? = null
     
-    private val _serverUrl = MutableStateFlow<String>(getDefaultServerUrl())
+    private val _serverUrl = MutableStateFlow(getDefaultServerUrl())
     val serverUrl: StateFlow<String> = _serverUrl.asStateFlow()
     
     /**
@@ -37,7 +37,7 @@ class ApiClientManager {
         val normalizedUrl = normalizeUrl(url)
         if (_serverUrl.value != normalizedUrl) {
             _serverUrl.value = normalizedUrl
-            recreateClient(normalizedUrl)
+            recreateClient("$normalizedUrl/")
         }
     }
     
@@ -79,8 +79,7 @@ class ApiClientManager {
             .httpClient(httpClient)
             .build()
         
-        @Suppress("DEPRECATION")
-        eventApi = ktorfit!!.create<EventApi>()
+        eventApi = ktorfit.createEventApi()
     }
     
     /**
