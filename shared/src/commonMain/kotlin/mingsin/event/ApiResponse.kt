@@ -3,7 +3,7 @@ package mingsin.event
 import kotlinx.serialization.Serializable
 
 /**
- * API 响应数据模型
+ * API response data model
  */
 @Serializable
 data class ApiResponse<T>(
@@ -13,7 +13,7 @@ data class ApiResponse<T>(
 )
 
 /**
- * 事件创建响应
+ * Event creation response
  */
 @Serializable
 data class EventResponse(
@@ -23,7 +23,7 @@ data class EventResponse(
 )
 
 /**
- * 服务器状态响应
+ * Server status response
  */
 @Serializable
 data class StatusResponse(

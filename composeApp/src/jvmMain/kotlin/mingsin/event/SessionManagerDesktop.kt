@@ -8,7 +8,7 @@ import kotlinx.serialization.encodeToString
 import kotlinx.serialization.json.Json
 
 /**
- * 桌面内置服务器的 WebSocket 会话管理器
+ * WebSocket session manager for desktop embedded server
  */
 class SessionManagerDesktop {
     private val mutex = Mutex()

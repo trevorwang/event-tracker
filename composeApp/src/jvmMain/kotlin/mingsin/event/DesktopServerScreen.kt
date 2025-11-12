@@ -21,14 +21,13 @@ fun DesktopServerScreen(
     val isRunning by DesktopServerManager.isRunning.collectAsState()
     val endpoints by DesktopServerManager.endpoints.collectAsState()
 
-    // 界面销毁时停止服务器
-    // 服务器生命周期现在由 DesktopServerManager 管理，不再随 Compose 销毁
+    // Server lifecycle is now managed by DesktopServerManager, not tied to Compose lifecycle
 
     Column(
         modifier = modifier.padding(PaddingValues(horizontal = 16.dp, vertical = 24.dp))
     ) {
         Text(
-            text = "桌面内置服务器",
+            text = "Desktop Embedded Server",
             style = MaterialTheme.typography.titleLarge,
             modifier = Modifier
                 .fillMaxWidth()
@@ -46,9 +45,9 @@ fun DesktopServerScreen(
         ) {
             Text(
                 when {
-                    isRunning -> "服务器已启动"
-                    isStarting -> "启动中..."
-                    else -> "启动服务器"
+                    isRunning -> "Server Running"
+                    isStarting -> "Starting..."
+                    else -> "Start Server"
                 }
             )
         }
@@ -64,7 +63,7 @@ fun DesktopServerScreen(
             ) {
                 Text(
                     text = buildString {
-                        appendLine("可访问地址：")
+                        appendLine("Accessible URLs:")
                         endpoints.forEach { appendLine(it) }
                     },
                     style = MaterialTheme.typography.bodyMedium,

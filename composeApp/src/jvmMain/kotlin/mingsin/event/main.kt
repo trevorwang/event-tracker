@@ -24,7 +24,7 @@ fun main() = application {
 private fun DesktopApp() {
     MaterialTheme {
         var tabIndex by remember { mutableStateOf(0) }
-        val tabs = listOf("服务器", "客户端")
+        val tabs = listOf("Server", "Client")
         Column(modifier = Modifier.fillMaxSize()) {
             TabRow(selectedTabIndex = tabIndex) {
                 tabs.forEachIndexed { index, title ->

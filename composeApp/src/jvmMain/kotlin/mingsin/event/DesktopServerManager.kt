@@ -107,7 +107,7 @@ object DesktopServerManager {
                 get("/api/status") {
                     call.respondText("OK")
                 }
-                // REST: 接收事件并广播
+                // REST: Receive events and broadcast
                 post("/api/events") {
                     try {
                         val event = call.receive<Event>()
@@ -131,7 +131,7 @@ object DesktopServerManager {
                         )
                     }
                 }
-                // REST: 状态
+                // REST: Status
                 get("/api/status") {
                     val (appCount, desktopCount) = sessionManager.getSessionCounts()
                     call.respond(
@@ -142,7 +142,7 @@ object DesktopServerManager {
                         )
                     )
                 }
-                // WebSocket: App 发送事件
+                // WebSocket: App sends events
                 webSocket("/ws/app") {
                     sessionManager.addAppSession(this)
                     try {
@@ -165,17 +165,17 @@ object DesktopServerManager {
                         sessionManager.removeAppSession(this)
                     }
                 }
-                // WebSocket: Desktop 接收事件
+                // WebSocket: Desktop receives events
                webSocket("/ws/desktop") {
                     sessionManager.addDesktopSession(this)
                    try {
-                       // 发送欢迎消息
+                       // Send welcome message
                        send(Frame.Text("Connected to EventTracker server"))
 
-                       // 保持连接，等待接收广播的事件
+                       // Keep connection alive, waiting to receive broadcast events
                        for (frame in incoming) {
-                           // Desktop 客户端通常只接收消息，不发送
-                           // 但这里可以处理心跳或其他控制消息
+                           // Desktop clients typically only receive messages, not send
+                           // But here we can handle heartbeat or other control messages
                            if (frame is Frame.Text) {
                                val text = frame.readText()
 //                               logger.debug("Received message from desktop: $text")

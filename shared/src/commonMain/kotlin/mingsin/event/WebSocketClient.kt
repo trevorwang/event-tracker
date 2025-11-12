@@ -16,7 +16,7 @@ import kotlinx.serialization.decodeFromString
 import kotlinx.serialization.json.Json
 
 /**
- * WebSocket 客户端管理器
+ * WebSocket client manager
  */
 class WebSocketClient {
     private val client = createHttpClient()
@@ -34,9 +34,9 @@ class WebSocketClient {
     val events: StateFlow<List<Event>> = _events.asStateFlow()
     
     /**
-     * 连接到 WebSocket 服务器
-     * @param url WebSocket 服务器地址
-     * @return 连接是否成功
+     * Connect to WebSocket server
+     * @param url WebSocket server URL
+     * @return Whether the connection was successful
      */
     suspend fun connect(url: String): Result<Unit> {
         return try {
@@ -44,7 +44,7 @@ class WebSocketClient {
             session = newSession
             _isConnected.value = true
 
-            // 在后台监听消息
+            // Listen for messages in background
             scope.launch {
                 try {
                     for (frame in newSession.incoming) {
@@ -54,12 +54,12 @@ class WebSocketClient {
                                 val event = json.decodeFromString<Event>(text)
                                 _events.value = _events.value + event
                             } catch (_: Exception) {
-                                // 忽略无法解析的消息
+                                // Ignore unparseable messages
                             }
                         }
                     }
                 } catch (_: Exception) {
-                    // 连接异常/关闭
+                    // Connection exception/closed
                 } finally {
                     _isConnected.value = false
                     session = null
@@ -75,7 +75,7 @@ class WebSocketClient {
     }
     
     /**
-     * 断开连接
+     * Disconnect from server
      */
     suspend fun disconnect() {
         session?.close()
@@ -84,14 +84,14 @@ class WebSocketClient {
     }
     
     /**
-     * 检查是否已连接
+     * Check if connected
      */
     fun isConnected(): Boolean {
         return _isConnected.value
     }
     
     /**
-     * 接收事件流
+     * Receive event stream
      */
     fun receiveEvents(): Flow<Event> = flow {
         _events.collect { eventList ->
@@ -102,7 +102,7 @@ class WebSocketClient {
     }
     
     /**
-     * 关闭客户端
+     * Close client
      */
     fun close() {
         scope.launch {
@@ -113,7 +113,7 @@ class WebSocketClient {
 }
 
 /**
- * 创建平台特定的 HttpClient
+ * Create platform-specific HttpClient
  */
 expect fun createHttpClient(): HttpClient
 
