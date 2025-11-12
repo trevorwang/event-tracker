@@ -28,7 +28,7 @@ fun ConnectScreen(
         horizontalAlignment = Alignment.CenterHorizontally
     ) {
         Text(
-            text = "连接到 WebSocket 服务器",
+            text = "Connect to WebSocket Server",
             style = MaterialTheme.typography.titleLarge,
             modifier = Modifier
                 .fillMaxWidth()
@@ -41,7 +41,7 @@ fun ConnectScreen(
                 wsUrl = it
                 errorMessage = null
             },
-            label = { Text("WebSocket 地址") },
+            label = { Text("WebSocket URL") },
             singleLine = true,
             enabled = !isConnecting,
             modifier = Modifier
@@ -60,7 +60,7 @@ fun ConnectScreen(
                         if (result.isSuccess) {
                             onConnected()
                         } else {
-                            errorMessage = result.exceptionOrNull()?.message ?: "连接失败"
+                            errorMessage = result.exceptionOrNull()?.message ?: "Connection failed"
                         }
                     }
                 }
@@ -74,9 +74,9 @@ fun ConnectScreen(
                     color = MaterialTheme.colorScheme.onPrimary
                 )
                 Spacer(modifier = Modifier.width(8.dp))
-                Text("连接中...")
+                Text("Connecting...")
             } else {
-                Text("连接")
+                Text("Connect")
             }
         }
 
@@ -90,7 +90,7 @@ fun ConnectScreen(
                 )
             ) {
                 Text(
-                    text = "错误: $errorMessage",
+                    text = "Error: $errorMessage",
                     style = MaterialTheme.typography.bodyMedium,
                     color = MaterialTheme.colorScheme.onErrorContainer,
                     modifier = Modifier.padding(16.dp)

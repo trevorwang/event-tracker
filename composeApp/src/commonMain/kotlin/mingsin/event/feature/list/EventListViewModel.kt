@@ -19,13 +19,13 @@ class EventListViewModel(
     val effects = MutableSharedFlow<EventListEffect>()
 
     init {
-        // 绑定事件流
+        // Bind event stream
         launch {
             webSocketClient.events.collectLatest { events ->
                 _uiState.value = _uiState.value.copy(events = events)
             }
         }
-        // 绑定连接状态
+        // Bind connection status
         launch {
             webSocketClient.isConnected.collectLatest { connected ->
                 _uiState.value = _uiState.value.copy(isConnected = connected)

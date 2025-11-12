@@ -43,6 +43,28 @@
   3. 视觉相关（background, padding, etc.）
   4. 交互相关（clickable, etc.）
 
+### MVI 架构模式
+- 使用 MVI (Model-View-Intent) 模式组织代码
+- 每个功能模块包含：
+  - **Contract**: 定义 `State`、`Intent`、`Effect`
+    - `State`: 实现 `UiState` 接口，包含所有 UI 状态
+    - `Intent`: 实现 `UiIntent` 接口，使用密封类/接口定义用户操作
+    - `Effect`: 实现 `UiEffect` 接口，使用密封类/接口定义副作用（导航、Toast 等）
+  - **ViewModel**: 继承 `SimpleViewModel`，处理业务逻辑
+    - 使用 `StateFlow` 管理状态
+    - 使用 `SharedFlow` 管理副作用
+    - 实现 `dispatch(intent)` 方法处理用户意图
+  - **Screen**: Compose UI 组件
+    - 通过 `collectAsState()` 收集状态
+    - 通过 `viewModel.dispatch(intent)` 分发用户意图
+    - 通过 `LaunchedEffect` 收集副作用
+- 文件组织：按功能模块放在 `feature/` 目录下
+  - `feature/list/EventListContract.kt`
+  - `feature/list/EventListViewModel.kt`
+  - `EventListScreen.kt` (UI 组件)
+- 基础架构代码放在 `architecture/` 目录下
+  - `Mvi.kt`: 定义 `UiState`、`UiIntent`、`UiEffect` 接口和 `SimpleViewModel` 基类
+
 ### 文件结构约定
 - **composeApp/**: Compose Multiplatform 应用代码
   - `commonMain/`: 所有平台共享的代码

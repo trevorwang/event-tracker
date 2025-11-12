@@ -10,7 +10,7 @@ import kotlinx.coroutines.launch
 import org.jetbrains.compose.ui.tooling.preview.Preview
 
 /**
- * 页面状态
+ * Screen state
  */
 sealed class AppScreen {
     data object Connect : AppScreen()
@@ -25,7 +25,7 @@ fun App() {
         val webSocketClient = remember { WebSocketClient() }
         val scope = rememberCoroutineScope()
         
-        // 当组件销毁时关闭 WebSocket 客户端
+        // Close WebSocket client when component is disposed
         DisposableEffect(Unit) {
             onDispose {
                 webSocketClient.close()

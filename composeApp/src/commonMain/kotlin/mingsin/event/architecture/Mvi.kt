@@ -7,7 +7,7 @@ import kotlinx.coroutines.cancel
 import kotlin.coroutines.CoroutineContext
 
 /**
- * 轻量级 MVI 基础设施，避免引入平台特定依赖
+ * Lightweight MVI infrastructure, avoiding platform-specific dependencies
  */
 interface UiState
 interface UiIntent

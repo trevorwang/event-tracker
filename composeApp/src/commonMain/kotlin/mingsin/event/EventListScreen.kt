@@ -17,7 +17,7 @@ import mingsin.event.feature.list.EventListViewModel
 import mingsin.event.feature.list.EventListState
 
 /**
- * Event List 页面
+ * Event List Screen
  */
 @Composable
 fun EventListScreen(
@@ -33,14 +33,14 @@ fun EventListScreen(
             .fillMaxSize()
             .padding(16.dp)
     ) {
-        // 顶部栏
+        // Top bar
         Row(
             modifier = Modifier.fillMaxWidth(),
             horizontalArrangement = Arrangement.SpaceBetween,
             verticalAlignment = Alignment.CenterVertically
         ) {
             Text(
-                text = "事件列表",
+                text = "Event List",
                 style = MaterialTheme.typography.headlineMedium,
                 fontWeight = FontWeight.Bold
             )
@@ -49,7 +49,7 @@ fun EventListScreen(
                 verticalAlignment = Alignment.CenterVertically,
                 horizontalArrangement = Arrangement.spacedBy(8.dp)
             ) {
-                // 连接状态指示器
+                // Connection status indicator
                 Surface(
                     shape = MaterialTheme.shapes.small,
                     color = if (state.isConnected) 
@@ -59,21 +59,21 @@ fun EventListScreen(
                     modifier = Modifier.padding(horizontal = 8.dp)
                 ) {
                     Text(
-                        text = if (state.isConnected) "已连接" else "未连接",
+                        text = if (state.isConnected) "Connected" else "Disconnected",
                         modifier = Modifier.padding(horizontal = 12.dp, vertical = 6.dp),
                         style = MaterialTheme.typography.labelMedium
                     )
                 }
                 
                 Button(onClick = { viewModel.dispatch(EventListIntent.Disconnect); onDisconnect() }) {
-                    Text("断开连接")
+                    Text("Disconnect")
                 }
             }
         }
         
         Spacer(modifier = Modifier.height(16.dp))
         
-        // 事件列表
+        // Event list
         if (state.events.isEmpty()) {
             Box(
                 modifier = Modifier
@@ -82,7 +82,7 @@ fun EventListScreen(
                 contentAlignment = Alignment.Center
             ) {
                 Text(
-                    text = "暂无事件",
+                    text = "No events",
                     style = MaterialTheme.typography.bodyLarge,
                     color = MaterialTheme.colorScheme.onSurfaceVariant
                 )
@@ -106,7 +106,7 @@ fun EventListScreen(
 }
 
 /**
- * 事件卡片组件
+ * Event Card Component
  */
 @Composable
 fun EventCard(
@@ -147,7 +147,7 @@ fun EventCard(
                     )
                 }
                 TextButton(onClick = onToggle) {
-                    Text(if (isExpanded) "收起" else "展开")
+                    Text(if (isExpanded) "Collapse" else "Expand")
                 }
             }
             
@@ -173,17 +173,17 @@ fun EventCard(
 }
 
 /**
- * 简单从 JSON 字符串中提取 "name" 字段，不引入额外依赖
+ * Extract "name" field from JSON string without additional dependencies
  */
 private fun extractEventName(data: String?): String? {
     if (data.isNullOrBlank()) return null
-    // 以最小代价提取 "name":"..."; 不严格 JSON 解析，避免引入依赖
+    // Extract "name":"..." with minimal overhead; not strict JSON parsing to avoid dependencies
     val regex = Regex(""""name"\s*:\s*"([^"]+)"""")
     return regex.find(data)?.groupValues?.getOrNull(1)
 }
 
 /**
- * 格式化时间戳
+ * Format timestamp
  */
 expect fun formatTimestamp(timestamp: Long): String
 
