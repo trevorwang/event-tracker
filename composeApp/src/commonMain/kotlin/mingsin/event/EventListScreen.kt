@@ -12,6 +12,14 @@ import androidx.compose.ui.unit.dp
 import org.jetbrains.compose.ui.tooling.preview.Preview
 import androidx.compose.runtime.collectAsState
 import androidx.compose.runtime.getValue
+import com.mikepenz.markdown.compose.Markdown
+import com.mikepenz.markdown.compose.components.markdownComponents
+import com.mikepenz.markdown.compose.elements.highlightedCodeBlock
+import com.mikepenz.markdown.compose.elements.highlightedCodeFence
+import com.mikepenz.markdown.m3.Markdown
+import com.mikepenz.markdown.m3.markdownColor
+import com.mikepenz.markdown.model.MarkdownColors
+import kotlinx.serialization.json.Json
 import mingsin.event.feature.list.EventListIntent
 import mingsin.event.feature.list.EventListViewModel
 import mingsin.event.feature.list.EventListState
@@ -27,7 +35,7 @@ fun EventListScreen(
 ) {
     val viewModel = remember(webSocketClient) { EventListViewModel(webSocketClient) }
     val state by viewModel.uiState.collectAsState()
-    
+
     Column(
         modifier = modifier
             .fillMaxSize()
@@ -44,7 +52,7 @@ fun EventListScreen(
                 style = MaterialTheme.typography.headlineMedium,
                 fontWeight = FontWeight.Bold
             )
-            
+
             Row(
                 verticalAlignment = Alignment.CenterVertically,
                 horizontalArrangement = Arrangement.spacedBy(8.dp)
@@ -52,9 +60,9 @@ fun EventListScreen(
                 // Connection status indicator
                 Surface(
                     shape = MaterialTheme.shapes.small,
-                    color = if (state.isConnected) 
-                        MaterialTheme.colorScheme.primaryContainer 
-                    else 
+                    color = if (state.isConnected)
+                        MaterialTheme.colorScheme.primaryContainer
+                    else
                         MaterialTheme.colorScheme.errorContainer,
                     modifier = Modifier.padding(horizontal = 8.dp)
                 ) {
@@ -64,7 +72,7 @@ fun EventListScreen(
                         style = MaterialTheme.typography.labelMedium
                     )
                 }
-                
+
                 // Clear all events button
                 if (state.events.isNotEmpty()) {
                     OutlinedButton(
@@ -73,15 +81,15 @@ fun EventListScreen(
                         Text("Clear All")
                     }
                 }
-                
+
                 Button(onClick = { viewModel.dispatch(EventListIntent.Disconnect); onDisconnect() }) {
                     Text("Disconnect")
                 }
             }
         }
-        
+
         Spacer(modifier = Modifier.height(16.dp))
-        
+
         // Filters
         EventFilters(
             selectedType = state.selectedType,
@@ -103,9 +111,9 @@ fun EventListScreen(
                 viewModel.dispatch(EventListIntent.ClearFilters)
             }
         )
-        
+
         Spacer(modifier = Modifier.height(16.dp))
-        
+
         // Event list
         if (state.filteredEvents.isEmpty()) {
             Box(
@@ -183,7 +191,7 @@ fun EventFilters(
                     }
                 }
             }
-            
+
             Row(
                 modifier = Modifier.fillMaxWidth(),
                 horizontalArrangement = Arrangement.spacedBy(12.dp)
@@ -196,7 +204,7 @@ fun EventFilters(
                     onValueSelected = onTypeSelected,
                     modifier = Modifier.weight(1f)
                 )
-                
+
                 // Source filter
                 FilterDropdown(
                     label = "Source",
@@ -205,7 +213,7 @@ fun EventFilters(
                     onValueSelected = onSourceSelected,
                     modifier = Modifier.weight(1f)
                 )
-                
+
                 // Device Name filter
                 FilterDropdown(
                     label = "Device Name",
@@ -232,7 +240,7 @@ fun FilterDropdown(
     modifier: Modifier = Modifier
 ) {
     var expanded by remember { mutableStateOf(false) }
-    
+
     ExposedDropdownMenuBox(
         expanded = expanded,
         onExpandedChange = { expanded = !expanded },
@@ -250,7 +258,7 @@ fun FilterDropdown(
                 .fillMaxWidth()
                 .menuAnchor()
         )
-        
+
         ExposedDropdownMenu(
             expanded = expanded,
             onDismissRequest = { expanded = false }
@@ -322,18 +330,35 @@ fun EventCard(
                     Text(if (isExpanded) "Collapse" else "Expand")
                 }
             }
-            
+
             if (isExpanded) {
                 Spacer(modifier = Modifier.height(8.dp))
-                
+
+//                val markdownContent = remember(event.data) {
+//                    formatEventDataAsMarkdown(event.data)
+//                }
+
+//                if (markdownContent.isNotEmpty()) {
+//                    Markdown(
+//                        content = markdownContent,
+//                        colors = markdownColor(),
+//                        modifier = Modifier.fillMaxWidth(),
+//                        components = markdownComponents(
+//                            codeBlock = highlightedCodeBlock,
+//                            codeFence = highlightedCodeFence,
+//                        )
+//                    )
+//                } else {
                 Text(
-                    text = event.data?:"",
+                    text = formatJson(event.data?:""),
                     style = MaterialTheme.typography.bodyMedium,
-                    color = MaterialTheme.colorScheme.onSurfaceVariant
+                    color = MaterialTheme.colorScheme.onSurfaceVariant,
+                    modifier = Modifier.fillMaxWidth()
                 )
-                
+//                }
+
                 Spacer(modifier = Modifier.height(8.dp))
-                
+
                 Text(
                     text = "ID: ${event.id} | ${formatTimestamp(event.timestamp)}",
                     style = MaterialTheme.typography.bodySmall,
@@ -352,6 +377,40 @@ private fun extractEventName(data: String?): String? {
     // Extract "name":"..." with minimal overhead; not strict JSON parsing to avoid dependencies
     val regex = Regex(""""name"\s*:\s*"([^"]+)"""")
     return regex.find(data)?.groupValues?.getOrNull(1)
+}
+
+fun formatJson(data: String): String {
+    return try {
+        // Try to parse as JSON
+        val json = Json {
+            prettyPrint = true
+            ignoreUnknownKeys = true
+            isLenient = true
+        }
+        val jsonElement = json.parseToJsonElement(data)
+        // Format JSON with pretty print
+        json.encodeToString(kotlinx.serialization.json.JsonElement.serializer(), jsonElement)
+    } catch (e: Exception) {
+        // If not valid JSON, return empty string to use plain text display
+        ""
+    }
+}
+
+/**
+ * Format event data as Markdown code block if it's valid JSON
+ * Returns markdown string with JSON syntax highlighting
+ */
+private fun formatEventDataAsMarkdown(data: String?): String {
+    if (data.isNullOrBlank()) return ""
+
+    return try {
+        val formattedJson = formatJson(data)
+        // Wrap in markdown code block with json syntax
+        "```json\n$formattedJson\n```"
+    } catch (e: Exception) {
+        // If not valid JSON, return empty string to use plain text display
+        ""
+    }
 }
 
 /**

@@ -55,7 +55,10 @@ kotlin {
             implementation(libs.androidx.lifecycle.runtimeCompose)
             implementation(projects.shared)
             implementation(libs.kermit)
-            implementation(kotlin("stdlib-common"))
+            implementation(libs.kotlinx.serializationJson)
+            implementation(libs.markdown.renderer)
+            implementation(libs.markdown.renderer.code)
+            implementation(libs.markdown.renderer.m3)
         }
         commonTest.dependencies {
             implementation(libs.kotlin.test)
