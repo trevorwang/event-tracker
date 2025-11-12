@@ -10,6 +10,11 @@ import androidx.compose.ui.Alignment
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
 import org.jetbrains.compose.ui.tooling.preview.Preview
+import androidx.compose.runtime.collectAsState
+import androidx.compose.runtime.getValue
+import mingsin.event.feature.list.EventListIntent
+import mingsin.event.feature.list.EventListViewModel
+import mingsin.event.feature.list.EventListState
 
 /**
  * Event List 页面
@@ -20,28 +25,14 @@ fun EventListScreen(
     webSocketClient: WebSocketClient,
     onDisconnect: () -> Unit = {}
 ) {
-    var events by remember { mutableStateOf<List<Event>>(emptyList()) }
-    var isConnected by remember { mutableStateOf(false) }
-    
-    // 监听 StateFlow
-    LaunchedEffect(webSocketClient) {
-        webSocketClient.events.collect { eventList ->
-            events = eventList
-        }
-    }
-    
-    LaunchedEffect(webSocketClient) {
-        webSocketClient.isConnected.collect { connected ->
-            isConnected = connected
-        }
-    }
+    val viewModel = remember(webSocketClient) { EventListViewModel(webSocketClient) }
+    val state by viewModel.uiState.collectAsState()
     
     Column(
         modifier = modifier
             .fillMaxSize()
             .padding(16.dp)
     ) {
-        var expandedIds by remember { mutableStateOf<Set<String>>(emptySet()) }
         // 顶部栏
         Row(
             modifier = Modifier.fillMaxWidth(),
@@ -61,20 +52,20 @@ fun EventListScreen(
                 // 连接状态指示器
                 Surface(
                     shape = MaterialTheme.shapes.small,
-                    color = if (isConnected) 
+                    color = if (state.isConnected) 
                         MaterialTheme.colorScheme.primaryContainer 
                     else 
                         MaterialTheme.colorScheme.errorContainer,
                     modifier = Modifier.padding(horizontal = 8.dp)
                 ) {
                     Text(
-                        text = if (isConnected) "已连接" else "未连接",
+                        text = if (state.isConnected) "已连接" else "未连接",
                         modifier = Modifier.padding(horizontal = 12.dp, vertical = 6.dp),
                         style = MaterialTheme.typography.labelMedium
                     )
                 }
                 
-                Button(onClick = onDisconnect) {
+                Button(onClick = { viewModel.dispatch(EventListIntent.Disconnect); onDisconnect() }) {
                     Text("断开连接")
                 }
             }
@@ -83,7 +74,7 @@ fun EventListScreen(
         Spacer(modifier = Modifier.height(16.dp))
         
         // 事件列表
-        if (events.isEmpty()) {
+        if (state.events.isEmpty()) {
             Box(
                 modifier = Modifier
                     .fillMaxWidth()
@@ -101,18 +92,12 @@ fun EventListScreen(
                 modifier = Modifier.fillMaxSize(),
                 verticalArrangement = Arrangement.spacedBy(8.dp)
             ) {
-                items(events.reversed(), key = { it.id }) { event ->
-                    val isExpanded = expandedIds.contains(event.id)
+                items(state.events.reversed(), key = { "${it.id}-${it.timestamp}" }) { event ->
+                    val isExpanded = state.expandedIds.contains(event.id)
                     EventCard(
                         event = event,
                         isExpanded = isExpanded,
-                        onToggle = {
-                            expandedIds = if (isExpanded) {
-                                expandedIds - event.id
-                            } else {
-                                expandedIds + event.id
-                            }
-                        }
+                        onToggle = { viewModel.dispatch(EventListIntent.ToggleExpand(event.id)) }
                     )
                 }
             }
