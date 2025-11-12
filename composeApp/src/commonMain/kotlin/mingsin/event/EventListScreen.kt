@@ -73,8 +73,27 @@ fun EventListScreen(
         
         Spacer(modifier = Modifier.height(16.dp))
         
+        // Filters
+        EventFilters(
+            selectedType = state.selectedType,
+            selectedSource = state.selectedSource,
+            availableTypes = state.availableTypes,
+            availableSources = state.availableSources,
+            onTypeSelected = { type ->
+                viewModel.dispatch(EventListIntent.SetTypeFilter(type))
+            },
+            onSourceSelected = { source ->
+                viewModel.dispatch(EventListIntent.SetSourceFilter(source))
+            },
+            onClearFilters = {
+                viewModel.dispatch(EventListIntent.ClearFilters)
+            }
+        )
+        
+        Spacer(modifier = Modifier.height(16.dp))
+        
         // Event list
-        if (state.events.isEmpty()) {
+        if (state.filteredEvents.isEmpty()) {
             Box(
                 modifier = Modifier
                     .fillMaxWidth()
@@ -92,7 +111,7 @@ fun EventListScreen(
                 modifier = Modifier.fillMaxSize(),
                 verticalArrangement = Arrangement.spacedBy(8.dp)
             ) {
-                items(state.events.reversed(), key = { "${it.id}-${it.timestamp}" }) { event ->
+                items(state.filteredEvents.reversed(), key = { "${it.id}-${it.timestamp}" }) { event ->
                     val isExpanded = state.expandedIds.contains(event.id)
                     EventCard(
                         event = event,
@@ -100,6 +119,133 @@ fun EventListScreen(
                         onToggle = { viewModel.dispatch(EventListIntent.ToggleExpand(event.id)) }
                     )
                 }
+            }
+        }
+    }
+}
+
+/**
+ * Event Filters Component
+ */
+@Composable
+fun EventFilters(
+    selectedType: String?,
+    selectedSource: String?,
+    availableTypes: Set<String>,
+    availableSources: Set<String>,
+    onTypeSelected: (String?) -> Unit,
+    onSourceSelected: (String?) -> Unit,
+    onClearFilters: () -> Unit
+) {
+    Card(
+        modifier = Modifier.fillMaxWidth(),
+        elevation = CardDefaults.cardElevation(defaultElevation = 1.dp),
+        colors = CardDefaults.cardColors(
+            containerColor = MaterialTheme.colorScheme.surfaceVariant
+        )
+    ) {
+        Column(
+            modifier = Modifier
+                .fillMaxWidth()
+                .padding(12.dp),
+            verticalArrangement = Arrangement.spacedBy(12.dp)
+        ) {
+            Row(
+                modifier = Modifier.fillMaxWidth(),
+                horizontalArrangement = Arrangement.SpaceBetween,
+                verticalAlignment = Alignment.CenterVertically
+            ) {
+                Text(
+                    text = "Filters",
+                    style = MaterialTheme.typography.titleSmall,
+                    fontWeight = FontWeight.Bold
+                )
+                if (selectedType != null || selectedSource != null) {
+                    TextButton(onClick = onClearFilters) {
+                        Text("Clear")
+                    }
+                }
+            }
+            
+            Row(
+                modifier = Modifier.fillMaxWidth(),
+                horizontalArrangement = Arrangement.spacedBy(12.dp)
+            ) {
+                // Type filter
+                FilterDropdown(
+                    label = "Type",
+                    selectedValue = selectedType,
+                    options = availableTypes.sorted(),
+                    onValueSelected = onTypeSelected,
+                    modifier = Modifier.weight(1f)
+                )
+                
+                // Source filter
+                FilterDropdown(
+                    label = "Source",
+                    selectedValue = selectedSource,
+                    options = availableSources.sorted(),
+                    onValueSelected = onSourceSelected,
+                    modifier = Modifier.weight(1f)
+                )
+            }
+        }
+    }
+}
+
+/**
+ * Filter Dropdown Component
+ */
+@OptIn(ExperimentalMaterial3Api::class)
+@Composable
+fun FilterDropdown(
+    label: String,
+    selectedValue: String?,
+    options: List<String>,
+    onValueSelected: (String?) -> Unit,
+    modifier: Modifier = Modifier
+) {
+    var expanded by remember { mutableStateOf(false) }
+    
+    ExposedDropdownMenuBox(
+        expanded = expanded,
+        onExpandedChange = { expanded = !expanded },
+        modifier = modifier
+    ) {
+        OutlinedTextField(
+            value = selectedValue ?: "All",
+            onValueChange = {},
+            readOnly = true,
+            label = { Text(label) },
+            trailingIcon = {
+                ExposedDropdownMenuDefaults.TrailingIcon(expanded = expanded)
+            },
+            modifier = Modifier
+                .fillMaxWidth()
+                .menuAnchor()
+        )
+        
+        ExposedDropdownMenu(
+            expanded = expanded,
+            onDismissRequest = { expanded = false }
+        ) {
+            DropdownMenuItem(
+                text = { Text("All") },
+                onClick = {
+                    onValueSelected(null)
+                    expanded = false
+                },
+                contentPadding = ExposedDropdownMenuDefaults.ItemContentPadding
+            )
+            options.forEach { option ->
+                DropdownMenuItem(
+                    text = { Text(option) },
+                    onClick = {
+                        onValueSelected(option)
+                        expanded = false
+                    },
+                    contentPadding = ExposedDropdownMenuDefaults.ItemContentPadding
+                )
             }
         }
     }
