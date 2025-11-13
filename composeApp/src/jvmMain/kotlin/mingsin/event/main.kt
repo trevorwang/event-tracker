@@ -23,23 +23,8 @@ fun main() = application {
 @Composable
 private fun DesktopApp() {
     MaterialTheme {
-        var tabIndex by remember { mutableStateOf(0) }
-        val tabs = listOf("Server", "Client")
-        Column(modifier = Modifier.fillMaxSize()) {
-            TabRow(selectedTabIndex = tabIndex) {
-                tabs.forEachIndexed { index, title ->
-                    Tab(
-                        selected = tabIndex == index,
-                        onClick = { tabIndex = index },
-                        text = { Text(title) }
-                    )
-                }
-            }
-            when (tabIndex) {
-                0 -> DesktopServerScreen(modifier = Modifier.fillMaxSize())
-                else -> App()
-            }
+        DesktopServerScreen(modifier = Modifier.fillMaxSize()) {
+            App()
         }
-
     }
 }

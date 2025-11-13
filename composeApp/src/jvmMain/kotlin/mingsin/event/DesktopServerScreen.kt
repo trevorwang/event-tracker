@@ -1,6 +1,7 @@
 package mingsin.event
 
 import androidx.compose.foundation.layout.Arrangement
+import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.PaddingValues
 import androidx.compose.foundation.layout.Row
@@ -20,7 +21,8 @@ import androidx.compose.ui.unit.dp
 
 @Composable
 fun DesktopServerScreen(
-    modifier: Modifier = Modifier
+    modifier: Modifier = Modifier,
+    content: @Composable () -> Unit = {}
 ) {
     val isStarting by DesktopServerManager.isStarting.collectAsState()
     val isRunning by DesktopServerManager.isRunning.collectAsState()
@@ -76,32 +78,37 @@ fun DesktopServerScreen(
             }
         }
     } else {
-        // Server running: show addresses and stop button
-        Row(
-            modifier = Modifier.padding(16.dp),
-            verticalAlignment = Alignment.CenterVertically,
-            horizontalArrangement = Arrangement.spacedBy(16.dp)
-        ) {
-            Text(
-                text = "Server Address:",
-                style = MaterialTheme.typography.titleMedium,
-            )
-            endpoints.firstOrNull()?.let { endpoint ->
-                Text(
-                    text = endpoint,
-                    style = MaterialTheme.typography.bodyLarge,
-                )
-            }
-            Spacer(modifier = Modifier.weight(1f))
-            Button(
-                onClick = {
-                    DesktopServerManager.stop()
-                },
-                colors = ButtonDefaults.buttonColors(
-                    containerColor = MaterialTheme.colorScheme.error
-                ),
+        Column(modifier = modifier) {
+            // Server running: show addresses and stop button
+            Row(
+                modifier = Modifier.padding(16.dp).fillMaxWidth(),
+                verticalAlignment = Alignment.CenterVertically,
+                horizontalArrangement = Arrangement.spacedBy(16.dp)
             ) {
-                Text("Stop Server")
+                Text(
+                    text = "Server Address:",
+                    style = MaterialTheme.typography.titleMedium,
+                )
+                endpoints.firstOrNull()?.let { endpoint ->
+                    Text(
+                        text = endpoint,
+                        style = MaterialTheme.typography.bodyLarge,
+                    )
+                }
+                Spacer(modifier = Modifier.weight(1f))
+                Button(
+                    onClick = {
+                        DesktopServerManager.stop()
+                    },
+                    colors = ButtonDefaults.buttonColors(
+                        containerColor = MaterialTheme.colorScheme.error
+                    ),
+                ) {
+                    Text("Stop Server")
+                }
+            }
+            Box {
+                content()
             }
         }
     }
