@@ -1,4 +1,4 @@
-package mingsin.event.list
+package mingsin.event.feature.list
 
 import kotlinx.coroutines.flow.MutableSharedFlow
 import kotlinx.coroutines.flow.MutableStateFlow

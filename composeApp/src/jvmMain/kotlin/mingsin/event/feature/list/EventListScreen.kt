@@ -1,4 +1,4 @@
-package mingsin.event.list
+package mingsin.event.feature.list
 
 import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.lazy.LazyColumn
@@ -27,7 +27,9 @@ import kotlinx.serialization.json.booleanOrNull
 import kotlinx.serialization.json.doubleOrNull
 import kotlinx.serialization.json.longOrNull
 import mingsin.event.Event
-import mingsin.event.WebSocketClient
+import org.koin.compose.koinInject
+import java.text.SimpleDateFormat
+import java.util.Date
 
 /**
  * Event List Screen
@@ -35,10 +37,9 @@ import mingsin.event.WebSocketClient
 @Composable
 fun EventListScreen(
     modifier: Modifier = Modifier,
-    webSocketClient: WebSocketClient,
     onDisconnect: () -> Unit = {}
 ) {
-    val viewModel = remember(webSocketClient) { EventListViewModel(webSocketClient) }
+    val viewModel: EventListViewModel = koinInject()
     val state by viewModel.uiState.collectAsState()
 
     Column(
@@ -744,8 +745,8 @@ private fun JsonTreeNodeRow(
  * Format timestamp
  */
 fun formatTimestamp(timestamp: Long): String {
-    val date = java.util.Date(timestamp)
-    val format = java.text.SimpleDateFormat("yyyy-MM-dd HH:mm:ss")
+    val date = Date(timestamp)
+    val format = SimpleDateFormat("yyyy-MM-dd HH:mm:ss")
     return format.format(date)
 }
 
@@ -753,9 +754,7 @@ fun formatTimestamp(timestamp: Long): String {
 @Composable
 private fun EventListScreenPreview() {
     MaterialTheme {
-        EventListScreen(
-            webSocketClient = WebSocketClient()
-        )
+        EventListScreen()
     }
 }
 

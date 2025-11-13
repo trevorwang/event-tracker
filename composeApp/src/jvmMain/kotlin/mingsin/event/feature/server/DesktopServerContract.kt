@@ -21,7 +21,6 @@ sealed interface DesktopServerIntent : UiIntent {
 }
 
 sealed interface DesktopServerEffect : UiEffect {
-    data class WebSocketConnected(val client: mingsin.event.WebSocketClient) : DesktopServerEffect
-    data class WebSocketConnectionFailed(val error: String) : DesktopServerEffect
+    // WebSocket management is now handled by DesktopWebSocketService
 }
 

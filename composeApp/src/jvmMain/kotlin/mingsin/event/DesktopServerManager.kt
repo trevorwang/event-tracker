@@ -79,7 +79,7 @@ object DesktopServerManager {
         scope.launch {
             try {
                 toStop.stop()
-                logger.i { "Server stopped successfully" }
+                logger.w { "Server stopped successfully" }
             } catch (e: Throwable) {
                 logger.e(e) { "Error stopping server: ${e.message}" }
             }
@@ -164,11 +164,11 @@ object DesktopServerManager {
                     sessionManager.addAppSession(this)
                     try {
                         for (frame in incoming) {
-                            if (frame is io.ktor.websocket.Frame.Text) {
+                            if (frame is Frame.Text) {
                                 val text = frame.readText()
                                 logger.d { "Received event from app: $text" }
                                 try {
-                                    val event = kotlinx.serialization.json.Json {
+                                    val event = Json {
                                         ignoreUnknownKeys = true
                                         encodeDefaults = true
                                     }.decodeFromString<Event>(text)
@@ -176,7 +176,7 @@ object DesktopServerManager {
                                     sessionManager.broadcastToDesktop(event)
                                 } catch (e: Exception) {
                                     logger.e(e) { "Failed to parse event from app: ${e.message}" }
-                                    send(io.ktor.websocket.Frame.Text("Error: Invalid event format"))
+                                    send(Frame.Text("Error: Invalid event format"))
                                 }
                             }
                         }
@@ -193,7 +193,7 @@ object DesktopServerManager {
                     sessionManager.addDesktopSession(this)
                    try {
                        // Send welcome message
-                       send(Frame.Text("Connected to EventTracker server"))
+//                       send(Frame.Text("Connected to EventTracker server"))
 
                        // Keep connection alive, waiting to receive broadcast events
                        for (frame in incoming) {

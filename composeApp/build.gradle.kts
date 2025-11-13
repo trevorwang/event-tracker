@@ -59,6 +59,8 @@ kotlin {
             implementation(libs.markdown.renderer)
             implementation(libs.markdown.renderer.code)
             implementation(libs.markdown.renderer.m3)
+            implementation(libs.koin.core)
+            implementation(libs.koin.compose)
         }
         commonTest.dependencies {
             implementation(libs.kotlin.test)

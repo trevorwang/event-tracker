@@ -10,39 +10,22 @@ import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.padding
 import androidx.compose.material3.*
 import androidx.compose.runtime.Composable
-import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.collectAsState
 import androidx.compose.runtime.getValue
-import androidx.compose.runtime.remember
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.unit.dp
+import mingsin.event.feature.list.EventListScreen
 import mingsin.event.feature.server.DesktopServerIntent
 import mingsin.event.feature.server.DesktopServerViewModel
+import org.koin.compose.koinInject
 
 @Composable
 fun DesktopServerScreen(
-    modifier: Modifier = Modifier,
-    content: @Composable (WebSocketClient) -> Unit = {}
+    modifier: Modifier = Modifier
 ) {
-    val webSocketClient = remember { WebSocketClient() }
-    val viewModel = remember { DesktopServerViewModel(webSocketClient) }
+    val viewModel: DesktopServerViewModel = koinInject()
     val uiState by viewModel.uiState.collectAsState()
-
-    // Handle effects
-    LaunchedEffect(Unit) {
-        viewModel.effects.collect { effect ->
-            when (effect) {
-                is mingsin.event.feature.server.DesktopServerEffect.WebSocketConnected -> {
-                    // WebSocket connected successfully
-                }
-                is mingsin.event.feature.server.DesktopServerEffect.WebSocketConnectionFailed -> {
-                    // Log error but don't block UI
-                    println("Failed to auto-connect WebSocket: ${effect.error}")
-                }
-            }
-        }
-    }
 
     if (!uiState.isRunning) {
         Column(
@@ -115,7 +98,7 @@ fun DesktopServerScreen(
                 }
             }
             Box {
-                content(webSocketClient)
+                EventListScreen()
             }
         }
     }

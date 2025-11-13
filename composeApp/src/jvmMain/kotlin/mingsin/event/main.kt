@@ -6,9 +6,16 @@ import androidx.compose.runtime.Composable
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.window.Window
 import androidx.compose.ui.window.application
-import mingsin.event.list.EventListScreen
+import mingsin.event.di.appModule
+import mingsin.event.di.desktopModule
+import org.koin.core.context.startKoin
 
 fun main() = application {
+    // Initialize Koin
+    startKoin {
+        modules(appModule, desktopModule)
+    }
+    
     Window(
         onCloseRequest = ::exitApplication,
         title = "EventTracker",
@@ -20,10 +27,6 @@ fun main() = application {
 @Composable
 private fun DesktopApp() {
     MaterialTheme {
-        DesktopServerScreen(modifier = Modifier.fillMaxSize()) { webSocketClient ->
-            // Pass the auto-connected WebSocketClient to App
-            // App can use this client or create its own as needed
-            EventListScreen(webSocketClient = webSocketClient)
-        }
+        DesktopServerScreen(modifier = Modifier.fillMaxSize())
     }
 }

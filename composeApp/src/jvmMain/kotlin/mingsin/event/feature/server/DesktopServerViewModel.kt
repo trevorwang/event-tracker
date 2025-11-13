@@ -8,12 +8,9 @@ import kotlinx.coroutines.flow.collectLatest
 import kotlinx.coroutines.launch
 import mingsin.event.DesktopServerManager
 import mingsin.event.SERVER_PORT
-import mingsin.event.WebSocketClient
 import mingsin.event.architecture.SimpleViewModel
 
-class DesktopServerViewModel(
-    private val webSocketClient: WebSocketClient
-) : SimpleViewModel() {
+class DesktopServerViewModel : SimpleViewModel() {
 
     private val _uiState = MutableStateFlow(DesktopServerState(portText = SERVER_PORT.toString()))
     val uiState: StateFlow<DesktopServerState> = _uiState.asStateFlow()
@@ -29,15 +26,7 @@ class DesktopServerViewModel(
         }
         launch {
             DesktopServerManager.isRunning.collectLatest { isRunning ->
-                val currentState = _uiState.value
-                _uiState.value = currentState.copy(isRunning = isRunning)
-                
-                // Auto connect to WebSocket when server starts
-                if (isRunning) {
-                    connectWebSocket()
-                } else {
-                    disconnectWebSocket()
-                }
+                _uiState.value = _uiState.value.copy(isRunning = isRunning)
             }
         }
         launch {
@@ -86,31 +75,6 @@ class DesktopServerViewModel(
         } else {
             null
         }
-    }
-
-    private fun connectWebSocket() {
-        launch {
-            val currentPort = _uiState.value.currentPort
-            val wsUrl = "ws://localhost:$currentPort/ws/desktop"
-            webSocketClient.connect(wsUrl).onFailure { error ->
-                effects.emit(DesktopServerEffect.WebSocketConnectionFailed(error.message ?: "Unknown error"))
-            }.onSuccess {
-                effects.emit(DesktopServerEffect.WebSocketConnected(webSocketClient))
-            }
-        }
-    }
-
-    private fun disconnectWebSocket() {
-        launch {
-            webSocketClient.disconnect()
-        }
-    }
-
-    override fun onCleared() {
-        launch {
-            webSocketClient.close()
-        }
-        super.onCleared()
     }
 }
 
