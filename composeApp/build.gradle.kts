@@ -130,6 +130,11 @@ compose.desktop {
                     sign.set(false)
                 }
             }
+
+            copyright = "©2025 Trevor Wang"
+
+            // release 配置
+            includeAllModules = true
         }
     }
 }
