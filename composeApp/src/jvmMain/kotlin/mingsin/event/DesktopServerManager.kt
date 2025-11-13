@@ -39,6 +39,8 @@ object DesktopServerManager {
     private var server: EmbeddedServer<NettyApplicationEngine, NettyApplicationEngine.Configuration>? = null
     private val sessionManager = SessionManagerDesktop()
 
+    private var currentPort: Int = SERVER_PORT
+
     private val _isStarting = MutableStateFlow(false)
     val isStarting: StateFlow<Boolean> = _isStarting
 
@@ -48,16 +50,17 @@ object DesktopServerManager {
     private val _endpoints = MutableStateFlow<List<String>>(emptyList())
     val endpoints: StateFlow<List<String>> = _endpoints
 
-    fun start() {
+    fun start(port: Int = SERVER_PORT) {
         if (_isStarting.value || _isRunning.value) return
+        currentPort = port
         _isStarting.value = true
-        logger.i { "Starting embedded server..." }
+        logger.i { "Starting embedded server on port $port..." }
         scope.launch {
             try {
-                val engine = startEmbeddedServer()
+                val engine = startEmbeddedServer(port)
                 server = engine
                 _isRunning.value = true
-                _endpoints.value = getLocalHttpAddresses()
+                _endpoints.value = getLocalHttpAddresses(port)
                 logger.i { "Server started successfully. Endpoints: ${_endpoints.value.joinToString()}" }
             } catch (e: Exception) {
                 logger.e(e) { "Failed to start server: ${e.message}" }
@@ -211,16 +214,16 @@ object DesktopServerManager {
         }
     }
 
-    private fun startEmbeddedServer(): EmbeddedServer<NettyApplicationEngine, NettyApplicationEngine.Configuration> {
+    private fun startEmbeddedServer(port: Int): EmbeddedServer<NettyApplicationEngine, NettyApplicationEngine.Configuration> {
         return embeddedServer(
             Netty,
-            port = SERVER_PORT,
+            port = port,
             host = "0.0.0.0",
             module = { installModule(this) }
         ).start(wait = false)
     }
 
-    private fun getLocalHttpAddresses(): List<String> {
+    private fun getLocalHttpAddresses(port: Int): List<String> {
         val addresses = mutableListOf<String>()
         val interfaces = NetworkInterface.getNetworkInterfaces()
         while (interfaces.hasMoreElements()) {
@@ -230,11 +233,10 @@ object DesktopServerManager {
             while (inetAddresses.hasMoreElements()) {
                 val addr = inetAddresses.nextElement()
                 if (addr is Inet4Address && !addr.isLoopbackAddress && !addr.isLinkLocalAddress) {
-                    addresses.add("http://${addr.hostAddress}:$SERVER_PORT")
+                    addresses.add("http://${addr.hostAddress}:$port")
                 }
             }
         }
-        addresses.add("http://localhost:$SERVER_PORT")
         return addresses.distinct()
     }
 }
