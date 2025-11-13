@@ -17,7 +17,11 @@ fun main() = application {
     }
     
     Window(
-        onCloseRequest = ::exitApplication,
+        onCloseRequest = {
+            // Stop server gracefully before exiting
+            DesktopServerManager.stop()
+            exitApplication()
+        },
         title = "EventTracker",
     ) {
         DesktopApp()

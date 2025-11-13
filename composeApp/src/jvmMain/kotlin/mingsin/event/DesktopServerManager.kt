@@ -74,16 +74,19 @@ object DesktopServerManager {
     fun stop() {
         val toStop = server ?: return
         logger.i { "Stopping embedded server..." }
+        // Set server to null first to prevent concurrent start attempts
         server = null
-        _isRunning.value = false
         scope.launch {
             try {
                 toStop.stop()
-                logger.w { "Server stopped successfully" }
+                logger.i { "Server stopped successfully" }
             } catch (e: Throwable) {
                 logger.e(e) { "Error stopping server: ${e.message}" }
+            } finally {
+                // Update state after stop operation completes
+                _isRunning.value = false
+                _endpoints.value = emptyList()
             }
-            _endpoints.value = emptyList()
         }
     }
 

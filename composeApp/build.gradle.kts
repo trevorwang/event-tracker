@@ -15,7 +15,7 @@ kotlin {
             jvmTarget.set(JvmTarget.JVM_11)
         }
     }
-    
+
     listOf(
         iosArm64(),
         iosSimulatorArm64()
@@ -25,20 +25,20 @@ kotlin {
             isStatic = true
         }
     }
-    
+
     jvm()
-    
+
 //    js {
 //        browser()
 //        binaries.executable()
 //    }
-    
+
 //    @OptIn(ExperimentalWasmDsl::class)
 //    wasmJs {
 //        browser()
 //        binaries.executable()
 //    }
-    
+
     sourceSets {
         androidMain.dependencies {
             implementation(compose.preview)
@@ -117,6 +117,20 @@ compose.desktop {
             targetFormats(TargetFormat.Dmg, TargetFormat.Msi, TargetFormat.Deb)
             packageName = "mingsin.event"
             packageVersion = "1.0.0"
+
+            // Application icon
+            // Using PNG icon file - Compose Desktop will automatically convert to platform-specific formats
+            val iconFilePath = project.file("src/jvmMain/resources/icon.png")
+            // macOS: PNG will be converted to .icns automatically
+            macOS {
+                bundleID = "mingsin.event"
+                dockName = "Event Tracker"
+                appStore = false
+                iconFile.set(project.file("src/jvmMain/resources/icon.icns"))
+                signing {
+                    sign.set(false)
+                }
+            }
         }
     }
 }
