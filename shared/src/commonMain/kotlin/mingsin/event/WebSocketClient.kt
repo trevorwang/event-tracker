@@ -57,7 +57,7 @@ class WebSocketClient {
                             logger.d { "Received message: $text" }
                             try {
                                 val event = json.decodeFromString<Event>(text)
-                                _events.value = _events.value + event
+                                _events.value += event
                                 logger.d { "Event parsed and added: id=${event.id}, type=${event.type}" }
                             } catch (e: Exception) {
                                 logger.w(e) { "Failed to parse message as Event: ${e.message}" }

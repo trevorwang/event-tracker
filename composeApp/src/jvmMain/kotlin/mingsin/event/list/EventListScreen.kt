@@ -1,8 +1,7 @@
-package mingsin.event
+package mingsin.event.list
 
 import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.lazy.LazyColumn
-import androidx.compose.foundation.lazy.items
 import androidx.compose.material3.*
 import androidx.compose.runtime.*
 import androidx.compose.ui.Modifier
@@ -12,6 +11,7 @@ import androidx.compose.ui.unit.dp
 import org.jetbrains.compose.ui.tooling.preview.Preview
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.Row
+import androidx.compose.foundation.lazy.items
 import androidx.compose.runtime.collectAsState
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
@@ -26,9 +26,8 @@ import kotlinx.serialization.json.JsonPrimitive
 import kotlinx.serialization.json.booleanOrNull
 import kotlinx.serialization.json.doubleOrNull
 import kotlinx.serialization.json.longOrNull
-import mingsin.event.feature.list.EventListIntent
-import mingsin.event.feature.list.EventListViewModel
-import mingsin.event.feature.list.EventListState
+import mingsin.event.Event
+import mingsin.event.WebSocketClient
 
 /**
  * Event List Screen
@@ -396,7 +395,7 @@ fun formatJson(data: String): String {
         }
         val jsonElement = json.parseToJsonElement(data)
         // Format JSON with pretty print
-        json.encodeToString(kotlinx.serialization.json.JsonElement.serializer(), jsonElement)
+        json.encodeToString(JsonElement.serializer(), jsonElement)
     } catch (e: Exception) {
         // If not valid JSON, return empty string to use plain text display
         ""
@@ -744,7 +743,11 @@ private fun JsonTreeNodeRow(
 /**
  * Format timestamp
  */
-expect fun formatTimestamp(timestamp: Long): String
+fun formatTimestamp(timestamp: Long): String {
+    val date = java.util.Date(timestamp)
+    val format = java.text.SimpleDateFormat("yyyy-MM-dd HH:mm:ss")
+    return format.format(date)
+}
 
 @Preview
 @Composable

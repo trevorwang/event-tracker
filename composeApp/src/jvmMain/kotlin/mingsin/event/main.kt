@@ -6,6 +6,7 @@ import androidx.compose.runtime.Composable
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.window.Window
 import androidx.compose.ui.window.application
+import mingsin.event.list.EventListScreen
 
 fun main() = application {
     Window(
@@ -22,7 +23,7 @@ private fun DesktopApp() {
         DesktopServerScreen(modifier = Modifier.fillMaxSize()) { webSocketClient ->
             // Pass the auto-connected WebSocketClient to App
             // App can use this client or create its own as needed
-            App(webSocketClient)
+            EventListScreen(webSocketClient = webSocketClient)
         }
     }
 }

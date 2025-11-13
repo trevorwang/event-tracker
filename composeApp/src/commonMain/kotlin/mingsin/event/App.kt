@@ -62,16 +62,7 @@ fun App(webSocketClient: WebSocketClient? = null) {
                 }
 
                 is AppScreen.EventList -> {
-                    EventListScreen(
-                        modifier = Modifier.fillMaxSize(),
-                        webSocketClient = screen.webSocketClient,
-                        onDisconnect = {
-                            scope.launch {
-                                screen.webSocketClient.disconnect()
-                                currentScreen = AppScreen.Connect
-                            }
-                        }
-                    )
+
                 }
             }
         }

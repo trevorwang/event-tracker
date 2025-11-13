@@ -1,4 +1,4 @@
-package mingsin.event.feature.list
+package mingsin.event.list
 
 import mingsin.event.Event
 import mingsin.event.architecture.UiEffect
