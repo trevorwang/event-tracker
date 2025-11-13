@@ -115,7 +115,7 @@ compose.desktop {
 
         nativeDistributions {
             targetFormats(TargetFormat.Dmg, TargetFormat.Msi, TargetFormat.Deb)
-            packageName = "mingsin.event"
+            packageName = "Event Tracker"
             packageVersion = "1.0.0"
 
             // Application icon
@@ -124,7 +124,6 @@ compose.desktop {
             // macOS: PNG will be converted to .icns automatically
             macOS {
                 bundleID = "mingsin.event"
-                dockName = "Event Tracker"
                 appStore = false
                 iconFile.set(project.file("src/jvmMain/resources/icon.icns"))
                 signing {
