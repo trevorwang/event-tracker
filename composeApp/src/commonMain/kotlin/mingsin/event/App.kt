@@ -19,19 +19,32 @@ sealed class AppScreen {
 
 @Composable
 @Preview
-fun App() {
+fun App(webSocketClient: WebSocketClient? = null) {
     MaterialTheme {
-        var currentScreen by remember { mutableStateOf<AppScreen>(AppScreen.Connect) }
-        val webSocketClient = remember { WebSocketClient() }
+        val providedClient = webSocketClient
+        val webSocketClient = remember { providedClient ?: WebSocketClient() }
         val scope = rememberCoroutineScope()
         
-        // Close WebSocket client when component is disposed
-        DisposableEffect(Unit) {
-            onDispose {
-                webSocketClient.close()
+        val isConnected by webSocketClient.isConnected.collectAsState()
+        var currentScreen by remember { mutableStateOf<AppScreen>(AppScreen.Connect) }
+
+        // Auto navigate to EventList if webSocketClient is provided and connected
+        LaunchedEffect(providedClient, isConnected) {
+            if (providedClient != null && isConnected) {
+                // If provided client is connected, go directly to EventList
+                currentScreen = AppScreen.EventList(webSocketClient)
             }
         }
-        
+
+        // Close WebSocket client when component is disposed (only if we created it)
+        DisposableEffect(providedClient) {
+            onDispose {
+                if (providedClient == null) {
+                    webSocketClient.close()
+                }
+            }
+        }
+
         Box(
             modifier = Modifier
                 .background(MaterialTheme.colorScheme.background)
@@ -47,6 +60,7 @@ fun App() {
                         }
                     )
                 }
+
                 is AppScreen.EventList -> {
                     EventListScreen(
                         modifier = Modifier.fillMaxSize(),

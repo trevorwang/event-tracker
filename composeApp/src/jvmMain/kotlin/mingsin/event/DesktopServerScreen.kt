@@ -10,28 +10,41 @@ import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.padding
 import androidx.compose.material3.*
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.collectAsState
 import androidx.compose.runtime.getValue
-import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
-import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.unit.dp
+import mingsin.event.feature.server.DesktopServerIntent
+import mingsin.event.feature.server.DesktopServerViewModel
 
 @Composable
 fun DesktopServerScreen(
     modifier: Modifier = Modifier,
-    content: @Composable () -> Unit = {}
+    content: @Composable (WebSocketClient) -> Unit = {}
 ) {
-    val isStarting by DesktopServerManager.isStarting.collectAsState()
-    val isRunning by DesktopServerManager.isRunning.collectAsState()
-    val endpoints by DesktopServerManager.endpoints.collectAsState()
+    val webSocketClient = remember { WebSocketClient() }
+    val viewModel = remember { DesktopServerViewModel(webSocketClient) }
+    val uiState by viewModel.uiState.collectAsState()
 
-    var portText by remember { mutableStateOf(SERVER_PORT.toString()) }
-    var portError by remember { mutableStateOf<String?>(null) }
+    // Handle effects
+    LaunchedEffect(Unit) {
+        viewModel.effects.collect { effect ->
+            when (effect) {
+                is mingsin.event.feature.server.DesktopServerEffect.WebSocketConnected -> {
+                    // WebSocket connected successfully
+                }
+                is mingsin.event.feature.server.DesktopServerEffect.WebSocketConnectionFailed -> {
+                    // Log error but don't block UI
+                    println("Failed to auto-connect WebSocket: ${effect.error}")
+                }
+            }
+        }
+    }
 
-    if (!isRunning) {
+    if (!uiState.isRunning) {
         Column(
             modifier = modifier.padding(PaddingValues(horizontal = 16.dp, vertical = 24.dp))
         ) {
@@ -45,16 +58,15 @@ fun DesktopServerScreen(
 
             // Server not running: show port input and start button
             OutlinedTextField(
-                value = portText,
+                value = uiState.portText,
                 onValueChange = { newValue ->
-                    portText = newValue
-                    portError = null
+                    viewModel.dispatch(DesktopServerIntent.UpdatePortText(newValue))
                 },
                 label = { Text("Port") },
                 singleLine = true,
-                enabled = !isStarting,
-                isError = portError != null,
-                supportingText = portError?.let { { Text(it) } },
+                enabled = !uiState.isStarting,
+                isError = uiState.portError != null,
+                supportingText = uiState.portError?.let { { Text(it) } },
                 modifier = Modifier
                     .fillMaxWidth()
                     .padding(bottom = 16.dp)
@@ -62,18 +74,13 @@ fun DesktopServerScreen(
 
             Button(
                 onClick = {
-                    val port = portText.toIntOrNull()
-                    if (port == null || port < 1 || port > 65535) {
-                        portError = "Please enter a valid port number (1-65535)"
-                    } else {
-                        DesktopServerManager.start(port)
-                    }
+                    viewModel.dispatch(DesktopServerIntent.StartServer)
                 },
-                enabled = !isStarting && portError == null,
+                enabled = !uiState.isStarting && uiState.portError == null,
                 modifier = Modifier.fillMaxWidth()
             ) {
                 Text(
-                    if (isStarting) "Starting..." else "Start Server"
+                    if (uiState.isStarting) "Starting..." else "Start Server"
                 )
             }
         }
@@ -89,7 +96,7 @@ fun DesktopServerScreen(
                     text = "Server Address:",
                     style = MaterialTheme.typography.titleMedium,
                 )
-                endpoints.firstOrNull()?.let { endpoint ->
+                uiState.endpoints.firstOrNull()?.let { endpoint ->
                     Text(
                         text = endpoint,
                         style = MaterialTheme.typography.bodyLarge,
@@ -98,7 +105,7 @@ fun DesktopServerScreen(
                 Spacer(modifier = Modifier.weight(1f))
                 Button(
                     onClick = {
-                        DesktopServerManager.stop()
+                        viewModel.dispatch(DesktopServerIntent.StopServer)
                     },
                     colors = ButtonDefaults.buttonColors(
                         containerColor = MaterialTheme.colorScheme.error
@@ -108,7 +115,7 @@ fun DesktopServerScreen(
                 }
             }
             Box {
-                content()
+                content(webSocketClient)
             }
         }
     }

@@ -39,7 +39,8 @@ object DesktopServerManager {
     private var server: EmbeddedServer<NettyApplicationEngine, NettyApplicationEngine.Configuration>? = null
     private val sessionManager = SessionManagerDesktop()
 
-    private var currentPort: Int = SERVER_PORT
+    private val _currentPort = MutableStateFlow(SERVER_PORT)
+    val currentPort: StateFlow<Int> = _currentPort
 
     private val _isStarting = MutableStateFlow(false)
     val isStarting: StateFlow<Boolean> = _isStarting
@@ -52,7 +53,7 @@ object DesktopServerManager {
 
     fun start(port: Int = SERVER_PORT) {
         if (_isStarting.value || _isRunning.value) return
-        currentPort = port
+        _currentPort.value = port
         _isStarting.value = true
         logger.i { "Starting embedded server on port $port..." }
         scope.launch {
