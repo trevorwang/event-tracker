@@ -9,6 +9,7 @@ import kotlinx.coroutines.launch
 import mingsin.event.Event
 import mingsin.event.EventResponse
 import mingsin.event.StatusResponse
+import mingsin.event.logger.FileLogWriterFactory
 
 /**
  * Event Service
@@ -17,7 +18,7 @@ import mingsin.event.StatusResponse
 class EventService(
     private val apiClientManager: ApiClientManager
 ) {
-    private val logger = Logger.withTag("EventService")
+    private val logger = FileLogWriterFactory().create()
     private val scope = CoroutineScope(SupervisorJob() + Dispatchers.Default)
     
     /**

@@ -1,26 +1,21 @@
 package mingsin.event
 
-import co.touchlab.kermit.Logger
 import io.ktor.client.*
 import io.ktor.client.plugins.websocket.*
 import io.ktor.websocket.*
-import kotlinx.coroutines.flow.Flow
-import kotlinx.coroutines.flow.flow
-import kotlinx.coroutines.flow.MutableStateFlow
-import kotlinx.coroutines.flow.StateFlow
-import kotlinx.coroutines.flow.asStateFlow
-import kotlinx.coroutines.launch
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.SupervisorJob
-import kotlinx.serialization.decodeFromString
+import kotlinx.coroutines.flow.*
+import kotlinx.coroutines.launch
 import kotlinx.serialization.json.Json
+import mingsin.event.logger.FileLogWriterFactory
 
 /**
  * WebSocket client manager
  */
 class WebSocketClient {
-    private val logger = Logger.withTag("WebSocketClient")
+    private val logger = FileLogWriterFactory().create()
     private val client = createHttpClient()
     private val json = Json {
         ignoreUnknownKeys = true

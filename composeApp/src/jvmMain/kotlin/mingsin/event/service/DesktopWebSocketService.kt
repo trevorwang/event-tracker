@@ -7,6 +7,7 @@ import kotlinx.coroutines.SupervisorJob
 import kotlinx.coroutines.flow.collectLatest
 import kotlinx.coroutines.launch
 import mingsin.event.DesktopServerManager
+import mingsin.event.logger.FileLogWriterFactory
 
 /**
  * Desktop WebSocket Service
@@ -16,7 +17,7 @@ import mingsin.event.DesktopServerManager
 class DesktopWebSocketService(
     private val webSocketService: WebSocketService
 ) {
-    private val logger = Logger.withTag("DesktopWebSocketService")
+    private val logger = FileLogWriterFactory().create()
     private val scope = CoroutineScope(SupervisorJob() + Dispatchers.Default)
     
     init {

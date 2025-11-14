@@ -1,19 +1,18 @@
 package mingsin.event.service
 
-import co.touchlab.kermit.Logger
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.SupervisorJob
 import kotlinx.coroutines.flow.StateFlow
-import kotlinx.coroutines.launch
 import mingsin.event.WebSocketClient
+import mingsin.event.logger.FileLogWriterFactory
 
 /**
  * WebSocket Service
  * Manages WebSocket client lifecycle and connection state
  */
 class WebSocketService {
-    private val logger = Logger.withTag("WebSocketService")
+    private val logger = FileLogWriterFactory().create()
     private val scope = CoroutineScope(SupervisorJob() + Dispatchers.Default)
     
     private val webSocketClient = WebSocketClient()
