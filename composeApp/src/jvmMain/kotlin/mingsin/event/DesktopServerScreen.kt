@@ -79,7 +79,7 @@ fun DesktopServerScreen(
                     text = "Server Address:",
                     style = MaterialTheme.typography.titleMedium,
                 )
-                uiState.endpoints.joinToString { "/n" }.let { endpoint ->
+                uiState.endpoints.joinToString("\n").let { endpoint ->
                     Text(
                         text = endpoint,
                         style = MaterialTheme.typography.bodyLarge,
