@@ -128,8 +128,40 @@ compose.desktop {
                 iconFile.set(project.file("src/jvmMain/resources/icon.icns"))
                 signing {
                     sign.set(false)
+                    identity.set("-")
+                    entitlementsFile = project.file("macos/info.plist")
                 }
-                entitlementsFile = project.file("macos/entitlements.plist")
+
+                infoPlist {
+
+                    extraKeysRawXml = """
+    <!-- 🔥 禁用 SANDBOX（允许监听端口 / 写文件 / 本地网络） -->
+    <key>com.apple.security.app-sandbox</key>
+    <false/>
+
+    <!-- 🟦 允许访问本地网络，否则局域网不会弹框 -->
+    <key>NSLocalNetworkUsageDescription</key>
+    <string>应用需要访问本地网络设备。</string>
+
+    <!-- 🟦 如果 Ktor 监听特定端口，必须声明，否则不会弹权限框 -->
+    <key>NSLocalNetworkPorts</key>
+    <array>
+        <string>8080</string>
+        <string>5000</string>
+        <string>3000</string>
+    </array>
+    
+    <!-- 文件访问（仅关闭 sandbox 就默认允许，这里额外保险） -->
+    <key>com.apple.security.files.user-selected.read-write</key>
+    <true/>
+    
+    <key>com.apple.security.network.server</key>
+    <true/>
+
+    <key>com.apple.security.network.client</key>
+    <true/>
+                    """.trimIndent()
+                }
             }
 
             copyright = "©2025 Trevor Wang"
