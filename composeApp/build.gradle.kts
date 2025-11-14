@@ -131,8 +131,16 @@ compose.desktop {
                 }
                 infoPlist {
                     extraKeysRawXml = """
-    <key>NSLocalNetworkUsageDescription</key>
-    <string>App 需要访问局域网设备。</string>
+<key>NSLocalNetworkUsageDescription</key>
+<string>App 需要访问本地网络设备。</string>
+
+<key>NSBonjourServices</key>
+<array>
+    <string>_http._tcp</string>
+    <string>_https._tcp</string>
+    <string>_tcp</string>
+    <string>_udp</string>
+</array>
                     """
                 }
             }
