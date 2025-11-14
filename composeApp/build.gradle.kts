@@ -129,6 +129,12 @@ compose.desktop {
                 signing {
                     sign.set(false)
                 }
+                infoPlist {
+                    extraKeysRawXml = """
+    <key>NSLocalNetworkUsageDescription</key>
+    <string>App 需要访问局域网设备。</string>
+                    """
+                }
             }
 
             copyright = "©2025 Trevor Wang"
